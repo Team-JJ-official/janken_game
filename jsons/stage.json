@@ -1,0 +1,42 @@
+{
+    "0": {
+        "name": "blue",
+        "path": "./images/stage_0.png"
+    },
+    "1": {
+        "name": "orange",
+        "path": "./images/stage_1.png"
+    },
+    "2": {
+        "name": "green",
+        "path": "./images/stage_2.png"
+    },
+    "3": {
+        "name": "red",
+        "path": "./images/stage_3.png"
+    },
+    "4": {
+        "name": "purple",
+        "path": "./images/stage_4.png"
+    },
+    "5": {
+        "name": "brown",
+        "path": "./images/stage_5.png"
+    },
+    "6": {
+        "name": "pink",
+        "path": "./images/stage_6.png"
+    },
+    "7": {
+        "name": "gray",
+        "path": "./images/stage_7.png"
+    },
+    "8": {
+        "name": "olive",
+        "path": "./images/stage_8.png"
+    },
+    "9": {
+        "name": "cyan",
+        "path": "./images/stage_9.png"
+    }
+}
