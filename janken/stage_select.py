@@ -4,6 +4,7 @@ from enum import Enum
 import pygame
 
 from stage import Stage
+from screen import Screen
 
 class Input(Enum):
     LEFT = 0
@@ -75,6 +76,8 @@ class StageSelectScreen:
         self.stage_name_font = pygame.font.SysFont(None, 30)
         self.cooltime = 0.1
         self.nowtime = 0
+        self.result = Screen.START
+        self.run = True
     
     def get_inputs(self):
         inputs = []
@@ -101,6 +104,8 @@ class StageSelectScreen:
                     self.selected_stage = (self.selected_stage - 1) % len(self.stages)
                 elif inp == Input.RIGHT:
                     self.selected_stage = (self.selected_stage + 1) % len(self.stages)
+                elif inp == Input.END:
+                    self.run = False
     
     def highlight(self, rect: pygame.rect.Rect, multiple: float):
         width = int(rect.width * multiple)
@@ -109,7 +114,6 @@ class StageSelectScreen:
         dy = (rect.height - height) // 2
         return pygame.rect.Rect(rect.x + dx, rect.y + dy, width, height), dx, dy
         
-    
     def draw(self):
         self.display.fill((255, 255, 255))
         base = self.selected_stage
@@ -143,21 +147,64 @@ class StageSelectScreen:
     
     def main(self):
         clock = pygame.time.Clock()
-        run = True
+        self.run = True
         fps = 60
         deltatime = 1 / fps
-        while run:
+        clock.tick(3)
+        while self.run:
             clock.tick(fps)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    run = False   
+                    self.run = False
+                    self.result = Screen.QUIT
             inputs = self.get_inputs()
-            print(inputs)
+            # print(inputs)
             self.hundle_inputs(inputs)
-            self.draw()
             self.update(deltatime)
+            self.draw()
             pygame.display.update()
 
+
+class StartScreen:
+    def __init__(self):
+        self.display = pygame.display.get_surface()
+        self.run = True
+        self.result = Screen.STAGE_SELECT
+    
+    def draw(self):
+        self.display.fill((255, 255, 255))
+        pygame.display.update()
+    
+    def get_inputs(self):
+        inputs = []
+        keys = pygame.key.get_pressed()
+        # キー入力をInputに変換
+        if keys[pygame.K_RETURN]:
+            inputs.append(Input.END)
+        return inputs
+    
+    def hundle_inputs(self, inputs: List[Input]):
+        if inputs:
+            self.run = False
+            self.result = Screen.STAGE_SELECT
+
+
+    def main(self):
+        clock = pygame.time.Clock()
+        run = True
+        fps = 60
+        deltatime = 1 / fps
+        clock.tick(3)
+        while self.run:
+            clock.tick(fps)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.run = False
+                    self.result = Screen.QUIT
+            inputs = self.get_inputs()
+            # print(inputs)
+            self.hundle_inputs(inputs)
+            self.draw()
 
 def gen_sample_json():
     import os, json
@@ -211,8 +258,25 @@ def get_sample_stages():
 if __name__ == "__main__":
     pygame.init()
     # gen_sample_json()
-    # exit()
     stages = get_sample_stages()
     pygame.display.set_mode((500, 500))
-    game = StageSelectScreen(stages=stages, gamesetting=None)
-    game.main()
+    pygame.display.set_caption("画面遷移のテスト(Enterで切り替え)")
+    stage_select_screen = StageSelectScreen
+    start_screen = StartScreen
+    # 最初の初期化がとても時間がかかるからいったん初期化しておく...なぜ?
+    stage_select_screen(stages, None)
+    start_screen()
+    ########
+    now = start_screen()
+    while True:
+        now.main()
+        result = now.result
+        if result == Screen.START:
+            print("start screen")
+            now = start_screen()
+        elif result == Screen.STAGE_SELECT:
+            print("stage select screen")
+            now = stage_select_screen(stages, None)
+        elif result == Screen.QUIT:
+            print("end game")
+            break
