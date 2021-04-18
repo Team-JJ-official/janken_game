@@ -7,3 +7,4 @@ class Screen(Enum):
     GAME = 3
     RESULT = 4
     OPTION = 5
+    QUIT = 6
