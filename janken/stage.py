@@ -2,7 +2,7 @@ from pygame.surface import Surface
 from pygame.rect import Rect
 
 class Stage:
-    def __init__(self, id_: int, name: str, image: Surface):
+    def __init__(self, id_: str, name: str, image: Surface):
         self.id = id_
         self.name = name
         self.image = image
