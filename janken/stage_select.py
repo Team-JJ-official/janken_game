@@ -13,7 +13,7 @@ from sprites import HoverRect, PressRect, SimpleSprite, TextSprite, make_outline
 from component import CounterBtn
 
 
-class StageSelectScreen2(BaseScreen):
+class StageSelectScreen(BaseScreen):
     def __init__(self, stages: Dict[str, Stage], gamesetting):
         super().__init__()
         self.stages = stages
@@ -328,5 +328,5 @@ if __name__ == "__main__":
 
     pygame.display.set_mode((500, 500))
 
-    stage_select_screen = StageSelectScreen2(stages, gamesetting)
+    stage_select_screen = StageSelectScreen(stages, gamesetting)
     stage_select_screen.main()
