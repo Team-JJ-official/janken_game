@@ -1,251 +1,316 @@
-from typing import Dict, List
+from typing import Dict, List, Callable, Tuple
 from enum import Enum
+import math
+import random
 
 import pygame
+from pygame.locals import Rect
+from pygame.sprite import Sprite
 
 from stage import Stage
-from screen import Screen
-
-class Input(Enum):
-    LEFT = 0
-    RIGHT = 1
-    UP = 2
-    DOWN = 3
-    END = 4
+from screen import Screen, BaseScreen
+from sprites import HoverRect, PressRect, SimpleSprite, TextSprite, make_outline_splites, load_animation_sprite
+from component import CounterBtn
 
 
-##############
-# 保留ここから #
-#############
-class Button:
-    def __init__(self, rect: pygame.rect.Rect):
-        self.rect = rect
-        self.hover = False
-        self.fnc = None
-    
-    def collidepoint(self, x: int, y: int) -> bool:
-        self.rect.collidepoint(x, y)
-
-class Choice:
-    def __init__(self, value):
-        self.value = value
-
-class Select:
-    def __init__(self, next_cmd, prev_cmd, choices: list):
-        self.next_cmd = next_cmd
-        self.prev_cmd = prev_cmd
-        self.choices = [Choice(t) for t in choices]
-        self.start_x
-        self.start_y
-        self.choice_width
-        self.choice_height
-        self.dx
-        self.dy
-        self.i = -1
-    
-    def decide(self):
-        if self.i >= 0:
-            return self.choices[self.i]
-        else:
-            return None
-##############
-# 保留ここまで #
-##############
-
-
-class StageSelectScreen:
+class StageSelectScreen2(BaseScreen):
     def __init__(self, stages: Dict[str, Stage], gamesetting):
-        self.display = pygame.display.get_surface()
-        self.rect = self.display.get_rect()
-        self.stages = list(stages.values())
-        self.selected_stage = 0
-        self.margin_lr = 10
-        self.margin_top = 50
-        self.cols = 5
-        self.rect_width = (self.rect.width - self.margin_lr * 2) // self.cols
-        self.rect_height = self.rect_width
-        self.stage_select_height = self.rect_height + 20
-        self.select_rect = pygame.rect.Rect(
-            self.margin_lr,
-            self.margin_top,
-            self.rect.width - self.margin_lr * 2,
-            self.stage_select_height
-        )
-        self.stock = 3
+        super().__init__()
+        self.stages = stages
         self.gamesetting = gamesetting
-        self.stage_name_font = pygame.font.SysFont(None, 30)
-        self.cooltime = 0.1
-        self.nowtime = 0
-        self.result = Screen.START
-        self.run = True
-    
-    def get_inputs(self):
-        inputs = []
-        keys = pygame.key.get_pressed()
-        # キー入力をInputに変換
-        if keys[pygame.K_RETURN]:
-            inputs.append(Input.END)
-            return inputs
-        if keys[pygame.K_w] or keys[pygame.K_UP]:
-            inputs.append(Input.UP)
-        elif keys[pygame.K_s] or keys[pygame.K_DOWN]:
-            inputs.append(Input.DOWN)
-        if keys[pygame.K_a] or keys[pygame.K_LEFT]:
-            inputs.append(Input.LEFT)
-        elif keys[pygame.K_d] or keys[pygame.K_RIGHT]:
-            inputs.append(Input.RIGHT)
-        return inputs
-    
-    def hundle_inputs(self, inputs: List[Input]):
-        if self.nowtime < 0:
-            self.nowtime = self.cooltime
-            for inp in inputs:
-                if inp == Input.LEFT:
-                    self.selected_stage = (self.selected_stage - 1) % len(self.stages)
-                elif inp == Input.RIGHT:
-                    self.selected_stage = (self.selected_stage + 1) % len(self.stages)
-                elif inp == Input.END:
-                    self.run = False
-    
-    def highlight(self, rect: pygame.rect.Rect, multiple: float):
-        width = int(rect.width * multiple)
-        height = int(rect.height * multiple)
-        dx = (rect.width - width) // 2
-        dy = (rect.height - height) // 2
-        return pygame.rect.Rect(rect.x + dx, rect.y + dy, width, height), dx, dy
-        
-    def draw(self):
-        self.display.fill((255, 255, 255))
-        base = self.selected_stage
-        
-        h = self.cols // 2
-        y = self.select_rect.y
-        for i in range(self.cols):
-            # 0, 1, 2, ..., self.cols
-            i += 1
-            if i > h:
-                i -= self.cols
-            # 1, 2, ..., h, -h, -h+1, ..., -1, 0
 
-            stage_i = (self.selected_stage + i) % len(self.stages)
-            
-            x = self.select_rect.x + self.rect_width * (i + h)
-            stage = self.stages[stage_i]
-            rect = stage.thumbnail_rect(self.rect_width, self.rect_height)
-            dx, dy = 0, 0
-            if i == 0:
-                rect, dx, dy = self.highlight(rect, multiple=1.5)
-            self.display.blit(stage.image, (x+dx, y+dy), rect)
-            font_x = x
-            font_y = y + rect.height
-            text = self.stage_name_font.render(stage.name, True, (0, 0, 0))
-            d_x = (self.rect_width - text.get_rect().width) // 2
-            self.display.blit(text, (font_x + d_x, font_y))
-        
-    def update(self, deltatime: float):
-        self.nowtime -= deltatime
+        pygame.display.set_caption("ステージセレクト")
+        self.outline_image = pygame.image.load("./images/outline.png")
+
+        self.hover_rects = {}
+        self.press_rects = {}
+        self.selected_stage = None
+        self.stock = 3
+        self.font_size_stage_title = 50
+        self.font_stage_title = pygame.font.SysFont(None, self.font_size_stage_title)
+        self.font_size_stock = 80
+        self.font_stock = pygame.font.SysFont(None, self.font_size_stock)
+        self.font_size = 40
+        self.font = pygame.font.SysFont(None, self.font_size)
+        self.stock_counter = None
+
+        self.init()
     
+    def _split_area(self):
+        """ 表示領域を決定し，Rectとして保持する．
+        """
+        rect = self.display.get_rect()
+        # 領域分割
+        self.stage_view_rect = Rect(
+            rect.x,
+            rect.y,
+            int(rect.width * 0.4),
+            int(rect.height * 0.75)
+        )
+        self.stage_select_rect = Rect(
+            self.stage_view_rect.right,
+            self.stage_view_rect.y,
+            rect.width - self.stage_view_rect.width,
+            self.stage_view_rect.height
+        )
+        self.stock_rect = Rect(
+            self.stage_view_rect.x,
+            self.stage_view_rect.bottom,
+            rect.width,
+            rect.height - self.stage_view_rect.height
+        )
+        self.area = [self.stage_view_rect, self.stage_select_rect, self.stock_rect]
+
+    def _set_stage_thumbnail_sprites(self):
+        """ サムネイルを正方形のタイルにしてself.stage_select_rect上に並べる
+        """
+        cols = 3
+        rows = math.ceil(len(self.stages) / cols)
+        padding = 10
+        tile_margin = 10
+        rect = self.stage_select_rect
+        rect = Rect(rect.x + padding, rect.y + padding, rect.w - padding * 2, rect.h - padding * 2)
+        tile_width = min((rect.w - (cols - 1) * tile_margin) // cols, (rect.h - (rows - 1) * tile_margin) // rows)
+        tile_height = tile_width
+        
+        left = rect.x + (rect.w - (tile_width * cols + tile_margin * (cols - 1))) // 2
+        top = rect.y + (rect.h - (tile_height * rows + tile_margin * (rows - 1))) // 2
+        thumbnail_sprites = []
+        stages = list(self.stages.values())
+        for i in range(rows):
+            for j in range(cols):
+                tmp = i * rows + j
+                if tmp >= len(stages):
+                    break
+                stage = stages[tmp]
+                x = left + j * (tile_width + tile_margin)
+                y = top + i * (tile_height + tile_margin)
+                
+                thumbnail_rect = stage.thumbnail_rect(width=tile_width, height=tile_height)
+                image = stage.image.subsurface(thumbnail_rect)
+
+                sprite = SimpleSprite(Rect(x, y, tile_width, tile_height), image)
+                self._add_hover_rect(sprite, self._visible_outlines, self._invisible_outlines)
+                self._add_press_rect(sprite, self._select_stage, stage)
+                thumbnail_sprites.append(sprite)
+        self.thumbnail_sprites = thumbnail_sprites
+        self.front_sprites.add(self.thumbnail_sprites)
+
+    def _set_stock_counter(self):
+        """ストックのカウンターを設置
+        """
+        counter_btn = CounterBtn(
+            x=self.stock_rect.centerx,
+            y=self.stock_rect.centery,
+            min_=1,
+            max_=5,
+            font=self.font_stock,
+            front_group=self.front_sprites,
+            back_group=self.middle_sprites,
+            color=(0, 0, 0),
+            bgcolor=None,
+        )
+        self.stock_counter = counter_btn
+        rect = counter_btn.rect
+        stock_label = TextSprite(
+            x=rect.right + 5,
+            y=rect.top,
+            text="stock",
+            font=self.font_stock,
+            color=(0, 0, 0),
+            align="left",
+            vertical_align="top",
+        )
+        self.middle_sprites.add(stock_label)
+
+    def _set_back_btn(self):
+        """戻るボタン設置
+        """
+        rect = self.display.get_rect()
+        back_btn = TextSprite(
+            x=rect.x + 5,
+            y=rect.y + 5,
+            text="<back",
+            font=self.font,
+            color=(0, 0, 0),
+            align="left",
+            vertical_align="top",
+        )
+        self.front_sprites.add(back_btn)
+        
+        self._add_hover_rect(back_btn, self._visible_outlines, self._invisible_outlines)
+        self._add_press_rect(back_btn, self._go_back_character_select, None)
+    
+    def _set_next_btn(self):
+        """進むボタン設置
+        """
+        rect = self.display.get_rect()
+        next_btn = TextSprite(
+            x=rect.right - 5,
+            y=rect.y + 5,
+            text="next>",
+            font=self.font,
+            color=(0, 0, 0),
+            align="right",
+            vertical_align="top",
+        )
+        self.front_sprites.add(next_btn)
+        
+        self._add_hover_rect(next_btn, self._visible_outlines, self._invisible_outlines)
+        self._add_press_rect(next_btn, self._go_to_game, None)
+
+    def _get_stage_big_thumbnails(self):
+        """ self.stage_view_rect に合わせた表示のための画像の辞書を作成する
+        """
+        padding = 10
+        rect = self.stage_view_rect
+        w = rect
+        image_rect = Rect(rect.x + padding, rect.y + padding, rect.w - padding * 2, rect.h - padding * 2)
+        text_rect = Rect(
+            image_rect.x,
+            image_rect.bottom - self.font_size_stage_title - 5,
+            image_rect.w,
+            self.font_size_stage_title + 5,
+        )
+        self.stage_view_sprites = {}
+        self.stage_name_sprites = {}
+        for id_, stage in self.stages.items():
+            thumbnail_rect = stage.thumbnail_rect(width=image_rect.w, height=image_rect.h)
+            image = stage.image.subsurface(thumbnail_rect)
+            stage_view_sprite = SimpleSprite(image_rect, image)
+            stage_name_sprite = TextSprite(
+                x=text_rect.centerx,
+                y=text_rect.centery,
+                text=stage.name,
+                font=self.font_stage_title,
+                color=(0, 0, 0),
+                bgcolor=(255, 255, 255),
+                align="center",
+                vertical_align="middle"
+            )
+            self.stage_view_sprites[stage] = stage_view_sprite
+            self.stage_name_sprites[stage] = stage_name_sprite
+        # デフォルトのステージ(先頭)を選択しておく
+        self._update_stage(list(self.stages.values())[0])
+
+    def _load_background(self):
+        """背景画像を読み込む (self.background_sprites に追加する)
+        """
+        # animation_sprite = load_animation_sprite("./images/janken/")
+        bg_image = pygame.image.load("./images/bg.jpeg")
+        bg_sprite = SimpleSprite(bg_image.get_rect(), bg_image)
+        self.background_sprites.add(bg_sprite)    
+
+    def init(self):
+        """初期化関数． 描画するスプライトグループを空にしてからいろいろ配置する
+        """
+        self.empty_all_sprites()
+        self._split_area()
+        self._set_stage_thumbnail_sprites()
+        self._set_stock_counter()
+        self._set_back_btn()
+        self._set_next_btn()
+        self._get_stage_big_thumbnails()
+        self._load_background()
+
+    def _add_hover_rect(self, sprite: Sprite, enter_fnc: Callable, exit_fnc: Callable):
+        rect = sprite.rect
+        hover_rect = HoverRect(rect, enter_fnc, exit_fnc)
+        outline_sprites = make_outline_splites(rect, self.outline_image, border_width=3)
+        self.hover_rects[hover_rect] = outline_sprites
+    
+    def _visible_outlines(self, hover_rect: HoverRect):
+        """ hover_rect に対応した OutlineSprite を見えるようにする (self.middle_spritesに追加)
+        """
+        outline_sprites = self.hover_rects[hover_rect]
+        self.middle_sprites.add(outline_sprites)
+     
+    def _invisible_outlines(self, hover_rect: HoverRect):
+        """ hover_rect に対応した OutlineSprite を見えないようにする (self.middle_spritesから削除)
+        """
+        outline_sprites = self.hover_rects[hover_rect]
+        self.middle_sprites.remove(outline_sprites)
+    
+    def _go_to_game(self, *args):
+        """ゲーム画面に進む
+        """
+        print("go to game screen")
+        print("stage: {}, stock: {}".format(self.selected_stage.name, self.stock))
+        self.next_screen = Screen.GAME
+        self.run = False
+
+    def _go_back_character_select(self, *args):
+        """キャラクター選択画面に戻る
+        """
+        print("go back to character select screen")
+        self.next_screen = Screen.CHARACTER_SELECT
+        self.run = False
+
+    def _add_press_rect(self, sprite: Sprite, fnc: Callable, value):
+        """ press_rect を self.press_rects に登録する
+        """
+        rect = sprite.rect
+        press_rect = PressRect(rect, fnc)
+        self.press_rects[press_rect] = value
+    
+    def _update_stage(self, new_stage: Stage):
+        """ self.selected_stage を new_stage に置き換える
+        """
+        if new_stage is not self.selected_stage:
+            if self.selected_stage is not None:
+                # 前の選択ステージを解除
+                stage_name_sprite = self.stage_name_sprites[self.selected_stage]
+                if self.front_sprites.has(stage_name_sprite):
+                    self.front_sprites.remove(stage_name_sprite)
+                stage_view_sprite = self.stage_view_sprites[self.selected_stage]
+                if self.middle_sprites.has(stage_view_sprite):
+                    self.middle_sprites.remove(stage_view_sprite)
+            # 選択ステージに更新
+            self.selected_stage = new_stage
+            stage_name_sprite = self.stage_name_sprites[self.selected_stage]
+            if not self.front_sprites.has(stage_name_sprite):
+                self.front_sprites.add(stage_name_sprite)
+            stage_view_sprite = self.stage_view_sprites[self.selected_stage]
+            if not self.middle_sprites.has(stage_view_sprite):
+                self.middle_sprites.add(stage_view_sprite)
+
+    def _select_stage(self, press_rect: PressRect):
+        """ press_rect が呼び出す関数．self.selected_stage を更新する
+        """
+        stage = self.press_rects[press_rect]
+        self._update_stage(stage)       
+
     def main(self):
-        clock = pygame.time.Clock()
-        self.run = True
-        fps = 60
-        deltatime = 1 / fps
-        clock.tick(3)
         while self.run:
-            clock.tick(fps)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    self.next_screen = Screen.QUIT
                     self.run = False
-                    self.result = Screen.QUIT
-            inputs = self.get_inputs()
-            # print(inputs)
-            self.hundle_inputs(inputs)
-            self.update(deltatime)
+            # hover_rectの更新
+            for hover_rect in self.hover_rects:
+                hover_rect.update()
+            # press_rectの更新
+            for press_rect in self.press_rects:
+                press_rect.update()
+            # componentsの更新
+            self.stock_counter.update()
+            self.stock = self.stock_counter.count
+            
+            self.update()
             self.draw()
+            
+            # press_rect の領域表示
+            for press_rect in self.press_rects:
+                pygame.draw.rect(self.display, (0, 0, 255), press_rect.rect, width=2)
+
             pygame.display.update()
 
-
-class StartScreen:
-    def __init__(self):
-        self.display = pygame.display.get_surface()
-        self.run = True
-        self.result = Screen.STAGE_SELECT
-    
-    def draw(self):
-        self.display.fill((255, 255, 255))
-        pygame.display.update()
-    
-    def get_inputs(self):
-        inputs = []
-        keys = pygame.key.get_pressed()
-        # キー入力をInputに変換
-        if keys[pygame.K_RETURN]:
-            inputs.append(Input.END)
-        return inputs
-    
-    def hundle_inputs(self, inputs: List[Input]):
-        if inputs:
-            self.run = False
-            self.result = Screen.STAGE_SELECT
-
-
-    def main(self):
-        clock = pygame.time.Clock()
-        run = True
-        fps = 60
-        deltatime = 1 / fps
-        clock.tick(3)
-        while self.run:
-            clock.tick(fps)
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.run = False
-                    self.result = Screen.QUIT
-            inputs = self.get_inputs()
-            # print(inputs)
-            self.hundle_inputs(inputs)
-            self.draw()
-
-def gen_sample_json():
-    import os, json
-    from PIL import Image, ImageDraw
-    import matplotlib.colors as mcolors
-
-
-    color_items = mcolors.TABLEAU_COLORS.items()
-
-    images_dir = "./images/"
-    jsons_dir = "./jsons/"
-
-    dic = {}
-
-    for i, (name, color) in enumerate(color_items):
-        file_path = os.path.join(images_dir, f"stage_{i}.png")
-        # 画像生成
-        width = 500
-        height=  500
-        img = Image.new("RGB", (width, height), color)
-        draw = ImageDraw.Draw(img)
-        center = (width//2, height//2)
-        topleft = (center[0] - 10, center[1] - 10)
-        bottomright = (center[0] + 10, center[1] + 10)
-        draw.ellipse((topleft, bottomright), "white")
-
-        img.save(file_path)
-        dic[i] = {
-            "name": name.split(":")[1],
-            "path": file_path,
-        }
-    
-    with open(os.path.join(jsons_dir, "stage.json"), "w") as f:
-        json.dump(dic, f, indent=4)
-
-def get_sample_stages():
+def get_sample_stages(json_path="./jsons/stage.json"):
+    """ json stages の サンプルを読み込む
+    """
     import glob, json
 
     stages = {}
-
-    json_path = "./jsons/stage.json"
 
     with open(json_path, "r") as f:
         json_data = json.load(f)
@@ -254,29 +319,14 @@ def get_sample_stages():
 
     return stages
 
-
 if __name__ == "__main__":
+
     pygame.init()
-    # gen_sample_json()
-    stages = get_sample_stages()
+
+    stages = get_sample_stages(json_path="./jsons/stages2.json")
+    gamesetting = None
+
     pygame.display.set_mode((500, 500))
-    pygame.display.set_caption("画面遷移のテスト(Enterで切り替え)")
-    stage_select_screen = StageSelectScreen
-    start_screen = StartScreen
-    # 最初の初期化がとても時間がかかるからいったん初期化しておく...なぜ?
-    stage_select_screen(stages, None)
-    start_screen()
-    ########
-    now = start_screen()
-    while True:
-        now.main()
-        result = now.result
-        if result == Screen.START:
-            print("start screen")
-            now = start_screen()
-        elif result == Screen.STAGE_SELECT:
-            print("stage select screen")
-            now = stage_select_screen(stages, None)
-        elif result == Screen.QUIT:
-            print("end game")
-            break
+
+    stage_select_screen = StageSelectScreen2(stages, gamesetting)
+    stage_select_screen.main()
