@@ -109,6 +109,7 @@ class StageSelectScreen(BaseScreen):
             back_group=self.middle_sprites,
             color=(0, 0, 0),
             bgcolor=None,
+            sound=self.click_sound,
         )
         self.stock_counter = counter_btn
         rect = counter_btn.rect
@@ -201,10 +202,19 @@ class StageSelectScreen(BaseScreen):
         bg_sprite = SimpleSprite(bg_image.get_rect(), bg_image)
         self.background_sprites.add(bg_sprite)    
 
+    def _load_sounds(self):
+        """サウンドを読み込む
+        """
+        self.bgm_sound = pygame.mixer.Sound("./sounds/menu.mp3")
+        self.bgm_sound.set_volume(0.3)
+        self.click_sound = pygame.mixer.Sound("./sounds/click2.mp3")
+        self.stage_sounds = {}
+
     def init(self):
         """初期化関数． 描画するスプライトグループを空にしてからいろいろ配置する
         """
         self.empty_all_sprites()
+        self._load_sounds()
         self._split_area()
         self._set_stage_thumbnail_sprites()
         self._set_stock_counter()
@@ -277,10 +287,12 @@ class StageSelectScreen(BaseScreen):
     def _select_stage(self, press_rect: PressRect):
         """ press_rect が呼び出す関数．self.selected_stage を更新する
         """
+        self.click_sound.play()
         stage = self.press_rects[press_rect]
         self._update_stage(stage)       
 
     def main(self):
+        self.bgm_sound.play(loops=-1)
         while self.run:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -299,11 +311,13 @@ class StageSelectScreen(BaseScreen):
             self.update()
             self.draw()
             
-            # press_rect の領域表示
-            for press_rect in self.press_rects:
-                pygame.draw.rect(self.display, (0, 0, 255), press_rect.rect, width=2)
+            # # press_rect の領域表示
+            # for press_rect in self.press_rects:
+            #     pygame.draw.rect(self.display, (0, 0, 255), press_rect.rect, width=2)
 
             pygame.display.update()
+        self.bgm_sound.stop()
+        self.click_sound.stop()
 
 def get_sample_stages(json_path="./jsons/stage.json"):
     """ json stages の サンプルを読み込む
