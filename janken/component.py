@@ -14,7 +14,9 @@ class CounterBtn:
             front_group: pygame.sprite.Group,
             back_group: pygame.sprite.Group,
             color: Color=(0, 0, 0),
-            bgcolor: Optional[Color]=None,):
+            bgcolor: Optional[Color]=None,
+            sound: Optional[pygame.mixer.Sound]=None
+        ):
         """(x, y)を中心に，カウンターを設置する． カウント範囲は[min_, max_]．
         """
         self.min = min_
@@ -22,6 +24,7 @@ class CounterBtn:
         self.count = min_
         self.front_group = front_group
         self.back_group = back_group
+        self.sound = sound
         self.press_rects = []
 
         # カウンター表示のためのスプライトの生成
@@ -90,10 +93,14 @@ class CounterBtn:
 
     def _count_up(self, *args):
         if self.count < self.max:
+            if self.sound is not None:
+                self.sound.play()
             self._update_count_sprite(self.count + 1)
     
     def _count_down(self, *args):
         if self.count > self.min:
+            if self.sound is not None:
+                self.sound.play()
             self._update_count_sprite(self.count - 1)
     
     def update(self):
