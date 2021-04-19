@@ -1,0 +1,14 @@
+{
+    "0": {
+        "name": "Irori",
+        "path": "./images/stage_sample_0.jpg"
+    },
+    "1": {
+        "name": "Hanabi",
+        "path": "./images/stage_sample_1.jpg"
+    },
+    "2": {
+        "name": "River",
+        "path": "./images/stage_sample_2.jpg"
+    }
+}
