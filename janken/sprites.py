@@ -20,6 +20,28 @@ class SimpleSprite(Sprite):
         self.rect = rect
         self.image = image
 
+class AlignSprite(Sprite):
+    def __init__(self, x: int, y: int, image: Surface, align="left", vertical_align="top"):
+        super().__init__()
+        # rect計算
+        rect = self.image.get_rect()
+        # 水平方向配置
+        if align == "right":
+            x = x - rect.width
+        elif align == "center":
+            x = x - rect.width // 2
+        else:   # left: default
+            x = x
+        # 鉛直方向配置
+        if vertical_align == "bottom":
+            y = y - rect.height
+        elif vertical_align == "middle":
+            y = y - rect.height // 2
+        else:   # top: default
+            y = y
+        self.rect = Rect(x, y, rect.width, rect.height)
+        self.image = image
+
 
 class OutlineSprite(Sprite):
     def __init__(self, rect: Rect, image: Surface):
@@ -85,7 +107,7 @@ class AnimationSprite(Sprite):
         self.rect = rect
         self.images = images
         self.counter = 0
-        self.interval = 0
+        self.interval = interval
         self.image_index = 0
     
     @property
@@ -98,9 +120,15 @@ class AnimationSprite(Sprite):
             self.counter = 0
             self.image_index = (self.image_index + 1) % len(self.images)
 
-def load_animation_sprite(images_dir: str, interval: int=0) -> AnimationSprite:
-    for image_path in glob.glob(os.path.join(images_dir, "*")):
-        print(image_path)
+def load_animation_sprite(centerx: int, centery: int, images_dir: str, interval: int=0, multiple:float=1.0) -> AnimationSprite:
+    images = [pygame.image.load(image_path) for image_path in sorted(glob.glob(os.path.join(images_dir, "*")))]
+    images = [pygame.transform.scale(image, (int(image.get_rect().w * multiple), int(image.get_rect().h * multiple))) for image in images]
+    # for image in images:
+    #     c = image.get_at((0, 0))
+    #     image.set_colorkey(c)
+    rect = images[0].get_rect()
+    rect.center = (centerx, centery)
+    return AnimationSprite(rect=rect, images=images, interval=interval)
 
 
 class HoverRect:

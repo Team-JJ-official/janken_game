@@ -200,7 +200,7 @@ class StageSelectScreen(BaseScreen):
         # animation_sprite = load_animation_sprite("./images/janken/")
         bg_image = pygame.image.load("./images/bg.jpeg")
         bg_sprite = SimpleSprite(bg_image.get_rect(), bg_image)
-        self.background_sprites.add(bg_sprite)    
+        self.background_sprites.add(bg_sprite) 
 
     def _load_sounds(self):
         """サウンドを読み込む
