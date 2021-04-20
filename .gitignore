@@ -4,3 +4,4 @@
 tmp.py
 *.pyc
 */old*
+.DS_Store
