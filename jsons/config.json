@@ -1,0 +1,8 @@
+{
+    "stage": {
+        "path": "jsons/stages2.json"
+    },
+    "character": {
+        "path": "jsons/character.json"
+    }
+}

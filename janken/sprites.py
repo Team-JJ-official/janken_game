@@ -120,14 +120,27 @@ class AnimationSprite(Sprite):
             self.counter = 0
             self.image_index = (self.image_index + 1) % len(self.images)
 
-def load_animation_sprite(centerx: int, centery: int, images_dir: str, interval: int=0, multiple:float=1.0) -> AnimationSprite:
+def load_animation_sprite(x: int, y: int, images_dir: str, interval: int=0, multiple:float=1.0, align:str="center", vertical_align:str="middle") -> AnimationSprite:
     images = [pygame.image.load(image_path) for image_path in sorted(glob.glob(os.path.join(images_dir, "*")))]
     images = [pygame.transform.scale(image, (int(image.get_rect().w * multiple), int(image.get_rect().h * multiple))) for image in images]
     # for image in images:
     #     c = image.get_at((0, 0))
     #     image.set_colorkey(c)
     rect = images[0].get_rect()
-    rect.center = (centerx, centery)
+    
+    if align == "left":
+        rect.left = x
+    elif align == "right":
+        rect.right = x
+    else:
+        rect.centerx = x
+
+    if vertical_align == "top":
+        rect.top = y
+    elif vertical_align == "bottom":
+        rect.bottom = y
+    else:
+        rect.centery = y
     return AnimationSprite(rect=rect, images=images, interval=interval)
 
 
