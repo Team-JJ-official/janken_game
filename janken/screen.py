@@ -27,6 +27,11 @@ class BaseScreen:
         self.run = True
         self.next_screen = Screen.QUIT
     
+    def get_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.run = False
+    
     def empty_all_sprites(self):
         self.background_sprites.empty()
         self.middle_sprites.empty()
