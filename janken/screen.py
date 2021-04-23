@@ -15,6 +15,7 @@ class BaseScreen:
     def __init__(self):
         if not pygame.init():
             pygame.init()
+        if not pygame.display.get_surface():
             pygame.display.set_mode((500, 500))
             pygame.display.set_caption("sample")
         self.display = pygame.display.get_surface()
@@ -26,6 +27,11 @@ class BaseScreen:
         self.clock = pygame.time.Clock()
         self.run = True
         self.next_screen = Screen.QUIT
+    
+    def get_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.run = False
     
     def empty_all_sprites(self):
         self.background_sprites.empty()

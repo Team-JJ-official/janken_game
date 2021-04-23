@@ -2,6 +2,7 @@ from typing import Dict, List, Callable, Tuple
 from enum import Enum
 import math
 import random
+from threading import Thread
 
 import pygame
 from pygame.locals import Rect
@@ -17,36 +18,33 @@ class Loading(BaseScreen):
         self.result = Screen.START
         self.fps = 60
 
-        bg_image = pygame.image.load("./images/bg.jpeg")
+        bg_image = pygame.image.load("./images/components/bg.jpeg").convert_alpha()
         bg_sprite = SimpleSprite(bg_image.get_rect(), bg_image)
         self.background_sprites.add(bg_sprite)
 
-        # logo = pygame.image.load("./images/loading.png")
-        # rect = logo.get_rect()
-        # logo = pygame.transform.scale(logo, (int(rect.w * 0.7), int(rect.h * 0.7)))
-        # rect = logo.get_rect()
-        # rect.center = self.display.get_rect().center
-        # logo = SimpleSprite(rect, logo)
-        # # logo = AlignSprite(
-        # #     x=rect.centerx,
-        # #     y=rect.centery,
-        # #     image=logo,
-        # #     align="center",
-        # #     vertical_align="middle",
-        # # )
-        # self.middle_sprites.add(logo)
         x, y = self.display.get_rect().center
-        loading_sprits = load_animation_sprite(x, y, "./images/loading/", interval=20, multiple=0.7)
+        loading_sprits = load_animation_sprite(x, y, "./images/components/loading", interval=20, multiple=0.7)
         self.middle_sprites.add(loading_sprits)
     
+    def init(self):
+        """全てのローディング処理
+        """
+        import time
+        pygame.font.init()
+        time.sleep(4)
+        self.run = False
+        self.next_screen = Screen.START
+    
     def main(self):
-        for i in range(600):
+        # 全てのローディングはスレッドで
+        thread = Thread(target=self.init)
+        thread.start()
+        while self.run:
+            self.get_events()
             self.update()
             self.draw()
             pygame.display.update()
             self.clock.tick(60)
-        pygame.font.init()
-        # 全てのローディング
 
 if __name__ == "__main__":
     pygame.init()
