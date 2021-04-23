@@ -15,6 +15,7 @@ class BaseScreen:
     def __init__(self):
         if not pygame.init():
             pygame.init()
+        if not pygame.display.get_surface():
             pygame.display.set_mode((500, 500))
             pygame.display.set_caption("sample")
         self.display = pygame.display.get_surface()
