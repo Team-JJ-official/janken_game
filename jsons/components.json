@@ -1,11 +1,22 @@
 {
     "background": {
-        "path": "./images/components/bg.jpeg"
+        "path": "./images/components/bg.jpeg",
+        "do_transpalent": false
     },
     "loading": {
-        "path": "./images/components/loading/"
+        "path": "./images/components/loading/",
+        "do_transpalent": false
     },
     "outline": {
-        "path": "./images/components/outline.png"
+        "path": "./images/components/outline.png",
+        "do_transpalent": false
+    },
+    "title": {
+        "path": "./images/components/title/",
+        "do_transpalent": true
+    },
+    "start": {
+        "path": "./images/components/start/",
+        "do_transpalent": true
     }
 }
