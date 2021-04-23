@@ -1,0 +1,11 @@
+{
+    "background": {
+        "path": "./images/components/bg.jpeg"
+    },
+    "loading": {
+        "path": "./images/components/loading/"
+    },
+    "outline": {
+        "path": "./images/components/outline.png"
+    }
+}
