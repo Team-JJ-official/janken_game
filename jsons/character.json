@@ -1,7 +1,9 @@
 {
     "0":{
-        "name": "",
-        "face_image_path": "",
-        "arm_image_path": ""
+        "name": "character1",
+        "face_image_path": "./images/characters/character1.png",
+        "gu_image_path": "./images/characters/janken_gu.png",
+        "choki_image_path": "./images/characters/janken_choki.png",
+        "pa_image_path": "./images/characters/janken_pa.png"
     }
 }
