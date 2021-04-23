@@ -39,10 +39,10 @@ class GameConfig:
                 key: Character(
                     id_=    key,
                     name=   dic["name"],
-                    face=   pygame.image.load(dic["face_image_path"]),
-                    gu=     pygame.image.load(dic["gu_image_path"]),
-                    choki=  pygame.image.load(dic["choki_image_path"]),
-                    pa=     pygame.image.load(dic["pa_image_path"])
+                    face=   pygame.image.load(dic["face_image_path"]).convert(),
+                    gu=     pygame.image.load(dic["gu_image_path"]).convert(),
+                    choki=  pygame.image.load(dic["choki_image_path"]).convert(),
+                    pa=     pygame.image.load(dic["pa_image_path"]).convert()
                 )
                 for key, dic in json_data.items()
             }
