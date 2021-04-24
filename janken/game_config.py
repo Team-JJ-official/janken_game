@@ -16,13 +16,19 @@ class GameConfig:
         self.characters = {}
         self.players = {}
 
+        self.check_pygame_inits()
         self.load()
+
+    def check_pygame_inits(self):
+        if not pygame.get_init():
+            pygame.init()
     
     def load(self):
         """全てを読み込む
         """
         self.load_stages()
         self.load_components()
+        self.load_sounds()
     
     def _load_json(self, path: str) -> dict:
         """JSONを読み込んで辞書を返す．
@@ -40,16 +46,14 @@ class GameConfig:
         """ファイル名を指定すると，画像をSurfaceで読み込んで返す．\
         do_transpalent=Trueの場合は，背景を透過する．
         """
-        if pygame.display.get_surface():
-            surface = pygame.image.load(path)
-        else:
-            surface = pygame.image.load(path)
+        surface = pygame.image.load(path)
         
-        if do_transpalent:
-            surface.convert_alpha()
-            self._do_transpalent(surface)
-        else:
-            surface.convert()
+        if pygame.display.get_surface():
+            if do_transpalent:
+                surface.convert_alpha()
+                self._do_transpalent(surface)
+            else:
+                surface.convert()
         
         return surface
     
@@ -100,6 +104,22 @@ class GameConfig:
                 for name, dic in json_data.items()
             }
 
+    def _load_sound(self, path: str) -> pygame.mixer.Sound:
+        """ファイルパスからSoundを読み込む
+        """
+        return pygame.mixer.Sound(path)
+    
+    def load_sounds(self):
+        tmp_dic = self.dic.get("sounds")
+        if tmp_dic:
+            json_data = self._load_json(tmp_dic["path"])
+
+            self.sounds = {
+                name: self._load_sound(dic["path"])
+                for name, dic in json_data.items()
+            }
+
 
 if __name__ == "__main__":
     game_config = GameConfig("./jsons/config.json")
+    # print()
