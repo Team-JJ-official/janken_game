@@ -222,7 +222,7 @@ class RichSprite(Sprite):
         self.hover = False
         self.check_hover = self.enter_fnc is not None or self.exit_fnc is not None
     
-    def change_press_fnc(self, press_fnc: Optional[Callable], press_fnc_args: Optional[tuples_fnc]=None):
+    def change_press_fnc(self, press_fnc: Optional[Callable], press_fnc_args: Optional[tuple]=None):
         """self.press_fnc, self.press_fnc_args を更新
         """
         self.press_fnc = press_fnc
