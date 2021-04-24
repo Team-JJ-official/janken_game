@@ -199,16 +199,14 @@ class RichSprite(Sprite):
         self.change_exit_fnc(exit_fnc, exit_fnc_args)
 
         # マウスクリック
-        self.press_fnc = press_fnc
-        self.pressed = False
-        self.check_press = self.press_fnc is not None
-        self.press_fnc_args = press_fnc_args
+        self.press_fnc = None
+        self.change_press_fnc(press_fnc, press_fnc_args)
     
     @property
     def image(self):
         return self.images[self.image_index]
     
-    def change_enter_fnc(self, enter_fnc: Optional[Callable], enter_fnc_args: Optional[tuple]):
+    def change_enter_fnc(self, enter_fnc: Optional[Callable], enter_fnc_args: Optional[tuple]=None):
         """self.enter_fnc, self.enter_fnc_args を更新
         """
         self.enter_fnc = enter_fnc
@@ -216,13 +214,21 @@ class RichSprite(Sprite):
         self.hover = False
         self.check_hover = self.enter_fnc is not None or self.exit_fnc is not None
     
-    def change_exit_fnc(self, exit_fnc: Optional[Callable], exit_fnc_args: Optional[tuple]):
+    def change_exit_fnc(self, exit_fnc: Optional[Callable], exit_fnc_args: Optional[tuple]=None):
         """self.exit_fnc, self.exit_fnc_args を更新
         """
         self.exit_fnc = exit_fnc
         self.exit_fnc_args = exit_fnc_args
         self.hover = False
         self.check_hover = self.enter_fnc is not None or self.exit_fnc is not None
+    
+    def change_press_fnc(self, press_fnc: Optional[Callable], press_fnc_args: Optional[tuples_fnc]=None):
+        """self.press_fnc, self.press_fnc_args を更新
+        """
+        self.press_fnc = press_fnc
+        self.pressed = False
+        self.check_press = self.press_fnc is not None
+        self.press_fnc_args = press_fnc_args
 
     def update(self):
         """更新処理
