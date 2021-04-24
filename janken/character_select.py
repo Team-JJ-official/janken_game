@@ -86,9 +86,7 @@ class CharacterSelectScreen(BaseScreen):
         for character, rect in zip(self.characters, self.character_rects):
             character.face_image = pygame.transform.scale(character.face_image, rect.size)
             sprite = RichSprite(rect.centerx, rect.centery, image=character.face_image)
-            outline = make_outline_sprites(rect, self.outline_image)
-            sprite.change_enter_fnc(self.middle_sprites.add, (outline,))
-            sprite.change_exit_fnc(self.middle_sprites.remove, (outline,))
+            self.hoverable(sprite, self.outline_image)
             sprite.change_press_fnc(self._press_character, (character,))
             self.front_sprites.add(sprite)
 
