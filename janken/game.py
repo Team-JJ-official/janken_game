@@ -1,4 +1,7 @@
 from screen import Screen
+from loading import LoadingScreen
+from title import TitleScreen
+from stage_select import StageSelectScreen
 
 class Game:
     class Gameplayer:
@@ -19,31 +22,47 @@ class Game:
         self.players = {}
         self.characters = {}
         self.stages = {}
-        self.start_screen = SS
-        self.character_select_screen = CSS
-        self.stage_select_screen = SSS
-        self.game_screen = GS
-        self.result_screen = RS
-        self.option_screen = OS
+        self.loading_screen = LoadingScreen
+        self.start_screen = TitleScreen
+        self.character_select_screen = None
+        self.stage_select_screen = StageSelectScreen
+        self.game_screen = None
+        self.result_screen = None
+        self.option_screen = None
 
     def main(self):
-        now = self.start_screen()
+        try:
+            loading_screen = self.loading_screen()
+            loading_screen.main()
+
+            self.game_config = loading_screen.game_config
+        except:
+            print("Loading not done.")
+            return
+        
+        now = self.loading_screen()
         while True:
             now.main()
-            result = now.result
-            if result == Screen.START:
-                now = self.start_screen()
-            elif result == Screen.CHARACTER_SELECT:
+            next_screen = now.next_screen
+            if next_screen == Screen.START:
+                now = self.start_screen(self.game_config)
+            elif next_screen == Screen.CHARACTER_SELECT:
                 now = self.character_select_screen(self.players, self.characters, self.gameplayer1, self.gameplayer2)
-            elif result == Screen.STAGE_SELECT:
-                now = self.stage_select_screen(self.stages, self.gamesetting)
-            elif result == Screen.GAME:
+            elif next_screen == Screen.STAGE_SELECT:
+                now = self.stage_select_screen(self.game_config, self.gamesetting)
+            elif next_screen == Screen.GAME:
                 now = self.game_screen(self.gameplayer1, self.gameplayer2, self.gamesetting)
-            elif result == Screen.RESULT:
+            elif next_screen == Screen.RESULT:
                 now = self.result_screen(self.gameplayer1, self.gameplayer2, self.gamesetting)
-            elif result == Screen.OPTION:
+            elif next_screen == Screen.OPTION:
                 now = self.option_screen()
+            elif next_screen == Screen.QUIT:
+                break
 
+
+if __name__ == "__main__":
+    game = Game()
+    game.main()
 
 
 
