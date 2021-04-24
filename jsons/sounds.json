@@ -1,0 +1,8 @@
+{
+    "click": {
+        "path": "./sounds/click.mp3"
+    },
+    "menu": {
+        "path": "./sounds/menu.mp3"
+    }
+}
