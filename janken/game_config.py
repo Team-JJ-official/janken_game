@@ -16,6 +16,7 @@ class GameConfig:
         self.stages = {}
         self.characters = {}
         self.players = {}
+        self.components = {}
 
         self.load()
     
@@ -23,7 +24,6 @@ class GameConfig:
         """全てを読み込む
         """
         self.load_stages()
-        self.load_images()
         self.load_characters()
         self.load_components()
     

@@ -4,7 +4,9 @@ import json
 import pygame
 
 from screen import Screen, BaseScreen
-from sprites import SimpleSprite, TextSprite, HoverRect, make_outline_splites
+from sprites import SimpleSprite, TextSprite, HoverRect
+from sprites import make_outline_splites as make_outline_sprites
+from game_config import GameConfig
 from character import Character
 from player import Player
 
@@ -13,6 +15,7 @@ class CharacterSelectScreen(BaseScreen):
     def __init__(self, players: Dict[str, Player], characters: Dict[str, Character], gameplayer1, gameplayer2):
         super().__init__()
 
+        # self.game_config = game_config
         self.players = players.values()
         self.characters = characters.values()
         self.gameplayer1 = gameplayer1
@@ -27,7 +30,9 @@ class CharacterSelectScreen(BaseScreen):
         self.space = 20
         self.hover_rects = {}
 
-        self.outline_image = pygame.image.load("./images/outline.png").convert()
+        self.outline_image = pygame.image.load("./images/components/outline.png").convert()
+        self.font_size = 40
+        self.font = pygame.font.SysFont(None, self.font_size)
 
     def _visible_outlines(self, hover_rect: HoverRect):
         """ hover_rect に対応した OutlineSprite を見えるようにする (self.middle_spritesに追加)
@@ -41,11 +46,10 @@ class CharacterSelectScreen(BaseScreen):
         outline_sprites = self.hover_rects[hover_rect]
         self.middle_sprites.remove(outline_sprites)
 
-    def _to_outlinable(self, rect: pygame.rect.Rect):
-        outline = make_outline_splites(rect, self.outline_image)
-        self.hover_rects[rect] = outline
-
-
+    def _to_outlinable(self, sprite: pygame.sprite.Sprite):
+        hover_rect = HoverRect(sprite.rect, self._visible_outlines, self._invisible_outlines)
+        outline = make_outline_sprites(sprite.rect, self.outline_image)
+        self.hover_rects[hover_rect] = outline
 
     def _set_characters(self):
         self.character_select_rect = pygame.rect.Rect(
@@ -64,13 +68,14 @@ class CharacterSelectScreen(BaseScreen):
         ) for i in range(len(self.characters))]
         for character, rect in zip(self.characters, self.character_rects):
             character.face_image = pygame.transform.scale(character.face_image, rect.size)
-            splite = SimpleSprite(rect, character.face_image)
-            self.front_sprites.add(splite)
+            sprite = SimpleSprite(rect, character.face_image)
+            self.front_sprites.add(sprite)
+            # self._to_outlinable(sprite)
 
     def _set_player_select(self):
         self.player_select_rect = pygame.rect.Rect(
             self.margin_lr,
-            self.character_select_rect.bottomleft[0] + (self.display_rect.height - self.character_select_rect.bottomleft[0]) // 2,
+            self.character_select_rect.bottomleft[1] + (self.display_rect.height - self.character_select_rect.bottomleft[1]) // 2,
             self.character_select_rect.width,
             30
         )
@@ -80,15 +85,17 @@ class CharacterSelectScreen(BaseScreen):
             text="Player 1",
             font=self.font,
             color=(0, 0, 0),
+            bgcolor=(255, 255, 255),
             align="left",
             vertical_align="middle",
         )
+        self.front_sprites.add(left)
 
 
     def _adapt_display(self):
         pygame.display.set_caption("Character Select")
         
-        bg_image = pygame.image.load("./images/bg.jpeg")
+        bg_image = pygame.image.load("./images/components/bg.jpeg")
         bg_image = pygame.transform.scale(bg_image, self.display_rect.size)
         bg_sprite = SimpleSprite(rect=self.display_rect, image=bg_image)
         self.background_sprites.add(bg_sprite)
@@ -96,6 +103,10 @@ class CharacterSelectScreen(BaseScreen):
         self._set_characters()
         self._set_player_select()
 
+    def draw(self):
+        for hover_rect in self.hover_rects.keys():
+            hover_rect.update()
+        super().draw()
 
     def main(self):
         self._adapt_display()
