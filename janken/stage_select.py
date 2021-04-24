@@ -11,16 +11,19 @@ from stage import Stage
 from screen import Screen, BaseScreen
 from sprites import HoverRect, PressRect, SimpleSprite, TextSprite, make_outline_splites, load_animation_sprite
 from component import CounterBtn
+from game_config import GameConfig
 
 
 class StageSelectScreen(BaseScreen):
-    def __init__(self, stages: Dict[str, Stage], gamesetting):
+    def __init__(self, game_config: GameConfig, gamesetting):
         super().__init__()
-        self.stages = stages
+        # game_configから必要な情報を取り出す
+        self.stages = game_config.stages
         self.gamesetting = gamesetting
+        self.load_images(game_config)
+        self.load_sounds(game_config)
 
         pygame.display.set_caption("ステージセレクト")
-        self.outline_image = pygame.image.load("./images/outline.png")
 
         self.hover_rects = {}
         self.press_rects = {}
@@ -197,24 +200,28 @@ class StageSelectScreen(BaseScreen):
     def _load_background(self):
         """背景画像を読み込む (self.background_sprites に追加する)
         """
-        # animation_sprite = load_animation_sprite("./images/janken/")
-        bg_image = pygame.image.load("./images/bg.jpeg")
+        bg_image = self.bg_image
         bg_sprite = SimpleSprite(bg_image.get_rect(), bg_image)
         self.background_sprites.add(bg_sprite) 
 
-    def _load_sounds(self):
+    def load_sounds(self, game_config: GameConfig):
         """サウンドを読み込む
         """
-        self.bgm_sound = pygame.mixer.Sound("./sounds/menu.mp3")
+        self.bgm_sound = game_config.sounds["menu"]
+        self.click_sound = game_config.sounds["click"]
         self.bgm_sound.set_volume(0.3)
-        self.click_sound = pygame.mixer.Sound("./sounds/click2.mp3")
         self.stage_sounds = {}
+    
+    def load_images(self, game_config: GameConfig):
+        """Surfaceを読み込む
+        """
+        self.outline_image = game_config.components["outline"]
+        self.bg_image = game_config.components["background"]
 
     def init(self):
         """初期化関数． 描画するスプライトグループを空にしてからいろいろ配置する
         """
         self.empty_all_sprites()
-        self._load_sounds()
         self._split_area()
         self._set_stage_thumbnail_sprites()
         self._set_stock_counter()
@@ -336,11 +343,13 @@ def get_sample_stages(json_path="./jsons/stage.json"):
 if __name__ == "__main__":
 
     pygame.init()
-
-    stages = get_sample_stages(json_path="./jsons/stages2.json")
-    gamesetting = None
-
     pygame.display.set_mode((500, 500))
 
-    stage_select_screen = StageSelectScreen(stages, gamesetting)
+    game_config = GameConfig("./jsons/config.json")
+    # exit()
+
+    # stages = get_sample_stages(json_path="./jsons/stages2.json")
+    gamesetting = None
+
+    stage_select_screen = StageSelectScreen(game_config, gamesetting)
     stage_select_screen.main()
