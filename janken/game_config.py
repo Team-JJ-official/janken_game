@@ -101,7 +101,8 @@ class GameConfig:
                     face=   pygame.image.load(dic["face_image_path"]).convert(),
                     gu=     pygame.image.load(dic["gu_image_path"]).convert(),
                     choki=  pygame.image.load(dic["choki_image_path"]).convert(),
-                    pa=     pygame.image.load(dic["pa_image_path"]).convert()
+                    pa=     pygame.image.load(dic["pa_image_path"]).convert(),
+                    select_voice= self._load_sound(dic["select_voice_path"])
                 )
                 for key, dic in json_data.items()
             }

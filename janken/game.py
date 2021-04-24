@@ -2,6 +2,7 @@ from screen import Screen
 from loading import LoadingScreen
 from title import TitleScreen
 from stage_select import StageSelectScreen
+from character_select import CharacterSelectScreen
 
 class Game:
     class Gameplayer:
@@ -24,7 +25,7 @@ class Game:
         self.stages = {}
         self.loading_screen = LoadingScreen
         self.start_screen = TitleScreen
-        self.character_select_screen = None
+        self.character_select_screen = CharacterSelectScreen
         self.stage_select_screen = StageSelectScreen
         self.game_screen = None
         self.result_screen = None
@@ -47,7 +48,7 @@ class Game:
             if next_screen == Screen.START:
                 now = self.start_screen(self.game_config)
             elif next_screen == Screen.CHARACTER_SELECT:
-                now = self.character_select_screen(self.players, self.characters, self.gameplayer1, self.gameplayer2)
+                now = self.character_select_screen(self.game_config, self.gameplayer1, self.gameplayer2)
             elif next_screen == Screen.STAGE_SELECT:
                 now = self.stage_select_screen(self.game_config, self.gamesetting)
             elif next_screen == Screen.GAME:
@@ -61,6 +62,9 @@ class Game:
 
 
 if __name__ == "__main__":
+    # import pygame
+    # pygame.init()
+    # pygame.display.set_mode((700, 700))
     game = Game()
     game.main()
 

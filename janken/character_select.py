@@ -1,10 +1,10 @@
-from typing import Dict
+from typing import Dict, List
 import json
 
 import pygame
 
 from screen import Screen, BaseScreen
-from sprites import SimpleSprite, TextSprite, HoverRect
+from sprites import SimpleSprite, TextSprite, HoverRect, RichSprite
 from sprites import make_outline_splites as make_outline_sprites
 from game_config import GameConfig
 from character import Character
@@ -12,12 +12,12 @@ from player import Player
 
 
 class CharacterSelectScreen(BaseScreen):
-    def __init__(self, players: Dict[str, Player], characters: Dict[str, Character], gameplayer1, gameplayer2):
+    def __init__(self, game_config, gameplayer1, gameplayer2):
         super().__init__()
 
-        # self.game_config = game_config
-        self.players = players.values()
-        self.characters = characters.values()
+        self.game_config = game_config
+        self.players = {}
+        self.characters = self.game_config.characters.values()
         self.gameplayer1 = gameplayer1
         self.gameplayer2 = gameplayer2
 
@@ -31,25 +31,42 @@ class CharacterSelectScreen(BaseScreen):
         self.hover_rects = {}
 
         self.outline_image = pygame.image.load("./images/components/outline.png").convert()
+        self.outline_image = pygame.transform.scale2x(self.outline_image)
+        self.outline_image = pygame.transform.scale2x(self.outline_image)
         self.font_size = 40
         self.font = pygame.font.SysFont(None, self.font_size)
 
-    def _visible_outlines(self, hover_rect: HoverRect):
-        """ hover_rect に対応した OutlineSprite を見えるようにする (self.middle_spritesに追加)
-        """
-        outline_sprites = self.hover_rects[hover_rect]
-        self.middle_sprites.add(outline_sprites)
-     
-    def _invisible_outlines(self, hover_rect: HoverRect):
-        """ hover_rect に対応した OutlineSprite を見えないようにする (self.middle_spritesから削除)
-        """
-        outline_sprites = self.hover_rects[hover_rect]
-        self.middle_sprites.remove(outline_sprites)
+    def _goto_stage_select(self):
+        self.next_screen = Screen.STAGE_SELECT
+        self.run = False
 
-    def _to_outlinable(self, sprite: pygame.sprite.Sprite):
-        hover_rect = HoverRect(sprite.rect, self._visible_outlines, self._invisible_outlines)
-        outline = make_outline_sprites(sprite.rect, self.outline_image)
-        self.hover_rects[hover_rect] = outline
+    def _goto_title(self):
+        self.next_screen = Screen.START
+        self.run = False
+
+
+    def _set_next_btn(self):
+        next_btn_image = self.font.render("Next", True, (0, 0, 0))
+        next_btn = RichSprite(*self.display_rect.bottomright, image=next_btn_image, align="right", vertical_align="bottom")
+        next_btn.rect.move_ip(-5, -5)
+        outline = make_outline_sprites(next_btn.rect, self.outline_image)
+        next_btn.change_enter_fnc(self.middle_sprites.add, outline)
+        next_btn.change_exit_fnc(self.middle_sprites.remove, outline)
+        next_btn.change_press_fnc(self._goto_stage_select)
+        self.front_sprites.add(next_btn)
+    
+    def _set_back_btn(self):
+        back_btn_image = self.font.render("Back", True, (0, 0, 0))
+        back_btn = RichSprite(*self.display_rect.bottomleft, image=back_btn_image, align="left", vertical_align="bottom")
+        back_btn.rect.move_ip(5, -5)
+        outline = make_outline_sprites(back_btn.rect, self.outline_image)
+        back_btn.change_enter_fnc(self.middle_sprites.add, outline)
+        back_btn.change_exit_fnc(self.middle_sprites.remove, outline)
+        back_btn.change_press_fnc(self._goto_title)
+        self.front_sprites.add(back_btn)
+
+    def _press_character(self, character: Character):
+        character.select_voice.play()
 
     def _set_characters(self):
         self.character_select_rect = pygame.rect.Rect(
@@ -68,9 +85,12 @@ class CharacterSelectScreen(BaseScreen):
         ) for i in range(len(self.characters))]
         for character, rect in zip(self.characters, self.character_rects):
             character.face_image = pygame.transform.scale(character.face_image, rect.size)
-            sprite = SimpleSprite(rect, character.face_image)
+            sprite = RichSprite(rect.centerx, rect.centery, image=character.face_image)
+            outline = make_outline_sprites(rect, self.outline_image)
+            sprite.change_enter_fnc(self.middle_sprites.add, (outline,))
+            sprite.change_exit_fnc(self.middle_sprites.remove, (outline,))
+            sprite.change_press_fnc(self._press_character, (character,))
             self.front_sprites.add(sprite)
-            # self._to_outlinable(sprite)
 
     def _set_player_select(self):
         self.player_select_rect = pygame.rect.Rect(
@@ -91,6 +111,14 @@ class CharacterSelectScreen(BaseScreen):
         )
         self.front_sprites.add(left)
 
+    def _set_bgm(self):
+        sounds = self.game_config.sounds
+        bgm = sounds["menu"]
+        bgm.set_volume(0.1)
+        bgm.play()
+
+        
+
 
     def _adapt_display(self):
         pygame.display.set_caption("Character Select")
@@ -102,6 +130,9 @@ class CharacterSelectScreen(BaseScreen):
 
         self._set_characters()
         self._set_player_select()
+        self._set_next_btn()
+        self._set_back_btn()
+        self._set_bgm()
 
     def draw(self):
         for hover_rect in self.hover_rects.keys():
@@ -112,10 +143,8 @@ class CharacterSelectScreen(BaseScreen):
         self._adapt_display()
         images = []
         while self.run:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.next_screen = Screen.QUIT
-                    self.run = False
+            self.get_events()
+            self.update()
             self.draw()
             pygame.display.update()
             self.clock.tick(self.fps)
@@ -126,7 +155,7 @@ def main():
     pygame.display.set_mode((700, 700))
     gc = GameConfig("./jsons/config.json")
     gc.characters["1"] = gc.characters["0"]
-    css = CharacterSelectScreen({}, gc.characters, {}, {})
+    css = CharacterSelectScreen(gc, {}, {})
     css.main()
 
 if __name__ == '__main__':
