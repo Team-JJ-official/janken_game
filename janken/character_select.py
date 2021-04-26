@@ -2,6 +2,7 @@ from typing import Dict, List
 import json
 
 import pygame
+import pygame.gfxdraw
 
 from screen import Screen, BaseScreen
 from sprites import SimpleSprite, TextSprite, HoverRect, RichSprite
@@ -9,6 +10,20 @@ from sprites import make_outline_splites as make_outline_sprites
 from game_config import GameConfig
 from character import Character
 from player import Player
+
+class BadgeSprite(pygame.sprite.Sprite):
+    """
+    colorで内部を塗りつぶした半径rの円のspriteを作成する\\
+    rectの初期値は(left=0, top=0, width=height=r)\\
+    text属性値を円の中心に描画する
+    """
+    def __init__(self, r, color, text=""):
+        super().__init__()
+        badge = pygame.Surface((2*r, 2*r))
+        badge.set_colorkey(badge.get_at((0, 0)))
+        pygame.gfxdraw.filled_circle(badge, r, r, r, color)
+        self.rect = badge.get_rect()
+        self.image = badge
 
 
 class CharacterSelectScreen(BaseScreen):
@@ -29,12 +44,21 @@ class CharacterSelectScreen(BaseScreen):
         self.character_rects = []
         self.space = 20
         self.hover_rects = {}
+        self.badge1 = BadgeSprite(25, (200, 5, 5), "1")
+        self.badge2 = BadgeSprite(25, (5, 200, 5), "2")
+        self.badge2.rect.center = (0, 50)
 
         self.outline_image = pygame.image.load("./images/components/outline.png").convert()
         self.outline_image = pygame.transform.scale2x(self.outline_image)
         self.outline_image = pygame.transform.scale2x(self.outline_image)
         self.font_size = 40
         self.font = pygame.font.SysFont(None, self.font_size)
+
+    def _badge_sprite(self, color):
+        badge = pygame.Surface((50, 50))
+        badge.set_colorkey(badge.get_at((0, 0)))
+        pygame.gfxdraw.filled_circle(badge, badge.get_width() // 2, badge.get_height() // 2, 20, color)
+        return SimpleSprite(badge.get_rect(), badge)
 
     def _goto_stage_select(self):
         self.next_screen = Screen.STAGE_SELECT
@@ -43,7 +67,6 @@ class CharacterSelectScreen(BaseScreen):
     def _goto_title(self):
         self.next_screen = Screen.START
         self.run = False
-
 
     def _set_next_btn(self):
         next_btn_image = self.font.render("Next", True, (0, 0, 0))
@@ -65,10 +88,10 @@ class CharacterSelectScreen(BaseScreen):
         back_btn.change_press_fnc(self._goto_title)
         self.front_sprites.add(back_btn)
 
-    def _press_character(self, character: Character):
+    def _press_character(self, character: Character, rect: pygame.rect.Rect):
         character.select_voice.play()
 
-    def _set_characters(self):
+    def _set_characters_area(self):
         self.character_select_rect = pygame.rect.Rect(
             self.margin_lr,
             self.margin_top,
@@ -87,10 +110,10 @@ class CharacterSelectScreen(BaseScreen):
             character.face_image = pygame.transform.scale(character.face_image, rect.size)
             sprite = RichSprite(rect.centerx, rect.centery, image=character.face_image)
             self.hoverable(sprite, self.outline_image)
-            sprite.change_press_fnc(self._press_character, (character,))
+            sprite.change_press_fnc(self._press_character, (character, rect))
             self.front_sprites.add(sprite)
 
-    def _set_player_select(self):
+    def _set_player_select_area(self):
         self.player_select_rect = pygame.rect.Rect(
             self.margin_lr,
             self.character_select_rect.bottomleft[1] + (self.display_rect.height - self.character_select_rect.bottomleft[1]) // 2,
@@ -125,9 +148,11 @@ class CharacterSelectScreen(BaseScreen):
         bg_image = pygame.transform.scale(bg_image, self.display_rect.size)
         bg_sprite = SimpleSprite(rect=self.display_rect, image=bg_image)
         self.background_sprites.add(bg_sprite)
+        self.front_sprites.add(self.badge1)
+        self.front_sprites.add(self.badge2)
 
-        self._set_characters()
-        self._set_player_select()
+        self._set_characters_area()
+        self._set_player_select_area()
         self._set_next_btn()
         self._set_back_btn()
         self._set_bgm()
