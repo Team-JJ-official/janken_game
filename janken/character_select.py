@@ -1,5 +1,6 @@
 from typing import Dict, List
 import json
+from math import ceil
 
 import pygame
 import pygame.gfxdraw
@@ -11,13 +12,68 @@ from game_config import GameConfig
 from character import Character
 from player import Player
 
+def surface_fit_to_rect(surface: pygame.surface.Surface, rect: pygame.rect.Rect) -> pygame.surface.Surface:
+    """ surfaceのアスペクト比を維持しつつrect内部を満たすsubsurfaceを返す """
+    s_rect = surface.get_rect()
+    amp = 1
+    if s_rect.width < rect.width or s_rect.height < rect.height:
+        if rect.width / s_rect.width < rect.height / s_rect.height:
+            amp = rect.height / s_rect.height
+        else:
+            amp = rect.width / s_rect.width
+    else:
+        if rect.width / s_rect.width < rect.height / s_rect.height:
+            amp = rect.width / s_rect.width
+        else:
+            amp = rect.height / s_rect.height
+    if amp != 1:
+        surface = pygame.transform.smoothscale(surface, (ceil(s_rect.width * amp), ceil(s_rect.height * amp)))
+    tag_rect = rect.copy()
+    s_rect = surface.get_rect()
+    tag_rect.center = s_rect.center
+    return surface.subsurface(tag_rect)
+
+class Badge:
+    """
+    背景と文字のspriteを1組のみ持つクラス\\
+    """
+    class BadgeSprite(pygame.sprite.Sprite):
+        """
+        colorで内部を塗りつぶした半径rの円のspriteを作成する\\
+        rectの初期値は(left=0, top=0, width=height=r)\\
+        """
+        def __init__(self, r = 10, color = (255, 255, 255)):
+            super().__init__()
+            badge = pygame.Surface((2*r, 2*r))
+            badge.set_colorkey(badge.get_at((0, 0)))
+            pygame.gfxdraw.filled_circle(badge, r, r, r, color)
+            self.rect = badge.get_rect()
+            self.image = badge
+    
+    def replace_circle(self, image: pygame.surface.Surface):
+        sprite = SimpleSprite(rect=image.get_rect(), image=image)
+        sprite.rect.center = self.badge_sprite.center
+        self.badge_sprite.add(sprite)
+
+    def replace_text(self, text = "", font_size = int(1e10)):
+        text_sprite = 
+        
+
+    def __init__(self, r = 10, color = (255, 255, 255), text = "", font_size = int(1e10)):
+        super().__init__()
+        self.badge_sprite = pygame.sprite.GroupSingle(BadgeSprite(r, color))
+        self.text_sprite
+        self.font = pygame.font.Font(size=font_size)
+
+
+
 class BadgeSprite(pygame.sprite.Sprite):
     """
     colorで内部を塗りつぶした半径rの円のspriteを作成する\\
     rectの初期値は(left=0, top=0, width=height=r)\\
     text属性値を円の中心に描画する
     """
-    def __init__(self, r, color, text=""):
+    def __init__(self, r = 10, color = (255, 255, 255), text=""):
         super().__init__()
         badge = pygame.Surface((2*r, 2*r))
         badge.set_colorkey(badge.get_at((0, 0)))
@@ -45,7 +101,7 @@ class CharacterSelectScreen(BaseScreen):
         self.space = 20
         self.hover_rects = {}
         self.badge1 = BadgeSprite(25, (200, 5, 5), "1")
-        self.badge2 = BadgeSprite(25, (5, 200, 5), "2")
+        self.badge2 = BadgeSprite(25)
         self.badge2.rect.center = (0, 50)
 
         self.outline_image = pygame.image.load("./images/components/outline.png").convert()
@@ -107,7 +163,8 @@ class CharacterSelectScreen(BaseScreen):
             height
         ) for i in range(len(self.characters))]
         for character, rect in zip(self.characters, self.character_rects):
-            character.face_image = pygame.transform.scale(character.face_image, rect.size)
+            # character.face_image = pygame.transform.scale(character.face_image, rect.size)
+            character.face_image = surface_fit_to_rect(rect=rect, surface=character.face_image)
             sprite = RichSprite(rect.centerx, rect.centery, image=character.face_image)
             self.hoverable(sprite, self.outline_image)
             sprite.change_press_fnc(self._press_character, (character, rect))
