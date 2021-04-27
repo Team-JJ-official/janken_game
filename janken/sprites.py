@@ -274,12 +274,6 @@ class RichSprite(Sprite):
                     elif not now_pressed and self.pressed:
                         self.pressed = False
                         
-                    
-
-        
-
-
-
 
 class HoverRect:
     def __init__(self, rect: Rect, enter_fnc: Callable, exit_fnc: Callable):
@@ -321,6 +315,72 @@ class PressRect:
                 self.fnc(self)
             elif not pressed and self.pressed:
                 self.pressed = False
+
+
+def layout_rects(base_rect: Rect, cols: Optional[int]=None, rows: Optional[int]=None, item_width: Optional[int]=None, item_height: Optional[int]=None, padding: Optional[int]=None, padding_top: int=0, padding_bottom: int=0, padding_left: int=0, padding_right: int=0, margin_horizontal: int=0, margin_vertical: int=0) -> List[Rect]:
+    """base_rectを均等に分割する．いろいろ指定可能性．
+
+    Args:
+        base_rect (Rect): [description]
+        cols (Optional[int], optional): [description]. Defaults to None.
+        rows (Optional[int], optional): [description]. Defaults to None.
+        item_width (Optional[int], optional): [description]. Defaults to None.
+        item_height (Optional[int], optional): [description]. Defaults to None.
+        padding (Optional[int], optional): これを指定した場合，全てのpaddingの値をこれに統一する. Defaults to None.
+        padding_top (int, optional): [description]. Defaults to 0.
+        padding_bottom (int, optional): [description]. Defaults to 0.
+        padding_left (int, optional): [description]. Defaults to 0.
+        padding_right (int, optional): [description]. Defaults to 0.
+        margin_horizontal (int, optional): [description]. Defaults to 0.
+        margin_vertical (int, optional): [description]. Defaults to 0.
+
+    Returns:
+        List[Rect]: 分割したRectのリスト
+    """
+    if (cols is None and item_width is None):
+        raise(TypeError("'cols' か 'item_width' のどちらか一方はNoneでない必要があります．"))
+    if (rows is None and item_height is None):
+        raise(TypeError("'rows' か 'item_height' のどちらか一方はNoneでない必要があります．"))
+    
+    if padding is not None:
+        padding_top = padding_bottom = padding_left = padding_right = padding
+    
+    W = base_rect.w - padding_left - padding_right
+    H = base_rect.h - padding_top - padding_bottom
+
+    # 水平方向の処理
+    if cols is not None and item_width is None: # colsのみ指定 -> item_width を計算
+        item_width = (W - margin_horizontal * (cols - 1)) // cols
+    elif cols is None and item_width is not None:  # item_widthのみの指定 -> cols を計算
+        cols = (W + margin_horizontal) // (item_width + margin_horizontal)
+    
+    w = item_width * cols + margin_horizontal * (cols - 1)
+    if w > W:
+        raise(ValueError("指定された値では横幅がオーバーします．cols, item_width, padding_left, padding_rightの値を修正してください．"))
+    base_x = base_rect.left + padding_left + (W - w) // 2
+    if base_x < base_rect.left:
+        raise(ValueError("水平方向エラーです．cols, item_width, padding_left, padding_rightの値を修正してください．"))
+
+    # 垂直方向の処理
+    if rows is not None and item_height is None: # rowsのみ指定 -> item_height を計算
+        item_height = (H - margin_vertical * (rows - 1)) // rows
+    elif rows is None and item_height is not None:  # item_heightのみの指定 -> rows を計算
+        rows = (H + margin_vertical) // (item_height + margin_vertical)
+    
+    h = item_height * rows + margin_vertical * (rows - 1)
+    if h > H:
+        raise(ValueError("指定された値では横幅がオーバーします．rows, item_height, padding_top, padding_bottomの値を修正してください．"))
+    base_y = base_rect.top + padding_top + (H - h) // 2
+    if base_y < base_rect.top:
+        raise(ValueError("水平方向エラーです．rows, item_height, padding_top, padding_bottomの値を修正してください．"))
+    
+    rects = []
+    for i in range(rows):
+        for j in range(cols):
+            x = base_x + (item_width + margin_horizontal) * j
+            y = base_y + (item_height + margin_vertical) * i
+            rects.append(Rect(x, y, item_width, item_height))
+    return rects
 
 
 if __name__ == "__main__":
