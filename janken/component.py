@@ -1,10 +1,13 @@
 from typing import Tuple, NewType, Optional
 
 import pygame
+import pygame.gfxdraw
 from pygame.locals import Rect
 from pygame.surface import Surface
+from pygame.sprite import Sprite
 
 from sprites import TextSprite, PressRect
+from sprites import RichSprite, SimpleSprite, adjust_rect
 
 Color = NewType("Color", Tuple[int, int, int])
 
@@ -106,3 +109,71 @@ class CounterBtn:
     def update(self):
         for press_rect in self.press_rects:
             press_rect.update()
+
+class CounterSprite(Sprite):
+    def __init__(self, x: int, y: int, font: pygame.font.Font, align: str="center", vertical_align: str="middle", min_: int=1, max_: int=5, color: Color=(0, 0, 0)):
+        super().__init__()
+        self.min = min_
+        self.max = max_
+        self.images = [font.render(str(i), True, color) for i in range(min_, max_+1)]
+        self.rects = [adjust_rect(image.get_rect(), x, y, align, vertical_align) for image in self.images]
+        left = right = x
+        top = bottom = y
+        for rect in self.rects:
+            left = min(left, rect.left)
+            right = max(right, rect.right)
+            top = min(top, rect.top)
+            bottom = max(bottom, rect.bottom)
+        self.base_rect = Rect(left, top, right - left, bottom - top)
+        self.count = min_
+    
+    def _count_up(self):
+        if self.count < self.max:
+            self.count += 1
+    
+    def _count_down(self):
+        if self.count > self.min:
+            self.count -= 1
+    
+    def get_count(self):
+        return self.count
+    
+    @property
+    def rect(self):
+        return self.rects[self.count - self.min]
+    
+    @property
+    def image(self):
+        return self.images[self.count - self.min]
+
+
+def make_counter_btn(x: int, y: int, font: pygame.font.Font, align: str="center", vertical_align: str="middle", min_: int=1, max_: int=5, color: Color=(0, 0, 0)):
+    group = pygame.sprite.Group()
+    counter_sprite = CounterSprite(x, y, font, align, vertical_align, min_, max_, color)
+    group.add(counter_sprite)
+    rect = counter_sprite.base_rect
+    w = h = rect.h
+    w = w // 3
+    points = [
+        (0, h//2),
+        (w-1, h*0.8-1),
+        (w-1, h*0.2)
+    ]
+    x, y = rect.topleft
+    left_image = Surface((w, h)).convert_alpha()
+    pygame.gfxdraw.filled_polygon(left_image, points, color)
+    # left_image = font.render("<", True, color)
+    btn = RichSprite(x-5, y, align="right", vertical_align="top", image=left_image, press_fnc=counter_sprite._count_down)
+    group.add(btn)
+    x, y = rect.topright
+    right_image = pygame.transform.flip(left_image, True, False)
+    btn = RichSprite(x+5, y, align="left", vertical_align="top", image=right_image, press_fnc=counter_sprite._count_up)
+    group.add(btn)
+    return group, counter_sprite.get_count
+
+if __name__ == "__main__":
+    pygame.init()
+    btn = CounterBtn(0, 0, pygame.font.SysFont(None, 10))
+    btn.update()
+    btn.draw(None)
+        
