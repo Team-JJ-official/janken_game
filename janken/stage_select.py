@@ -10,11 +10,13 @@ from pygame.sprite import Sprite
 from stage import Stage
 from screen import Screen, BaseScreen
 from sprites import HoverRect, PressRect, SimpleSprite, TextSprite, make_outline_splites, load_animation_sprite
+from sprites import RichSprite, layout_rects
 from component import CounterBtn
+from component import make_counter_btn
 from game_config import GameConfig
 
 
-class StageSelectScreen(BaseScreen):
+class StageSelectScreen2(BaseScreen):
     def __init__(self, game_config: GameConfig, gamesetting):
         super().__init__()
         # game_configから必要な情報を取り出す
@@ -325,6 +327,165 @@ class StageSelectScreen(BaseScreen):
             pygame.display.update()
         self.bgm_sound.stop()
         self.click_sound.stop()
+
+
+class StageSelectScreen(BaseScreen):
+    def __init__(self, game_config: GameConfig, gamesetting):
+        super().__init__()
+        # game_configから必要な情報を取り出す
+        self.stages = game_config.stages
+        self.gamesetting = gamesetting
+        self.load_images(game_config)
+        self.load_sounds(game_config)
+
+        pygame.display.set_caption("ステージセレクト")
+
+        self.selected_stage = None
+        self.stock = 3
+
+        self.btn_font = pygame.font.SysFont(None, 30)
+        self.stock_font = pygame.font.SysFont(None, 60)
+
+        self.init()
+    
+    def init(self):
+        self._split_area()
+        self._set_next_back_btn()
+        self._set_stages()
+        self._set_stage_view_thumbnails()
+        self._set_stock_btn()
+    
+    def load_sounds(self, game_config: GameConfig):
+        """サウンドを読み込む
+        """
+        self.bgm_sound = game_config.sounds["menu"]
+        self.click_sound = game_config.sounds["click"]
+        self.bgm_sound.set_volume(0.3)
+        self.stage_sounds = {}
+    
+    def load_images(self, game_config: GameConfig):
+        """Surfaceを読み込む
+        """
+        self.outline_image = game_config.components["outline"]
+        self.bg_image = game_config.components["background"]
+    
+    def _split_area(self):
+        """ 表示領域を決定し，Rectとして保持する．
+        """
+        rect = self.display.get_rect()
+        # 領域分割
+        self.stage_view_rect = Rect(
+            rect.x,
+            rect.y,
+            int(rect.width * 0.4),
+            int(rect.height * 0.75)
+        )
+        self.stage_select_rect = Rect(
+            self.stage_view_rect.right,
+            self.stage_view_rect.y,
+            rect.width - self.stage_view_rect.width,
+            self.stage_view_rect.height
+        )
+        self.stock_rect = Rect(
+            self.stage_view_rect.x,
+            self.stage_view_rect.bottom,
+            rect.width,
+            rect.height - self.stage_view_rect.height
+        )
+        self.area = [self.stage_view_rect, self.stage_select_rect, self.stock_rect]
+
+    def _set_next_back_btn(self):
+        """next, backボタンの設置
+        """
+        rect = self.display.get_rect()
+        tuples = [
+            ("next", "right", rect.w - 5, 5, Screen.GAME),
+            ("back", "left", 5, 5, Screen.CHARACTER_SELECT)
+        ]
+        for text, align, x, y, next_screen in tuples:
+            btn_surface = self.btn_font.render(text, True, (0, 0, 0))
+            btn_sprite = RichSprite(
+                x=x,
+                y=y,
+                align=align,
+                vertical_align="top",
+                image=btn_surface,
+                press_fnc=self._go_to_screen,
+                press_fnc_args=(next_screen,)
+            )
+            self.hoverable(btn_sprite, self.outline_image, border_width=3)
+            self.front_sprites.add(btn_sprite)
+
+    def _go_to_screen(self, next_screen: Screen):
+        """画面遷移する
+        """
+        print("go to", next_screen)
+        print("stage: {}, stock: {}".format(self.selected_stage, self.get_count_fnc()))
+        self.next_screen = next_screen
+        self.run = False
+
+    def _select_stage(self, stage: Stage):
+        """ステージを選んだ際の処理
+        """
+        if self.selected_stage is not None:
+            # 前選んでいたスプライトを所属グループから削除
+            pre_view_sprite = self.stage_view_sprites[self.selected_stage]
+            pre_view_sprite.remove(pre_view_sprite.groups())
+        # 選択ステージを更新
+        self.selected_stage = stage
+        new_view_sprite = self.stage_view_sprites[self.selected_stage]
+        self.middle_sprites.add(new_view_sprite)
+
+    def _set_stages(self):
+        """画面右側にステージのサムネイルをタイル表示する
+        """
+        base_rect = self.stage_select_rect
+        rects = layout_rects(base_rect=base_rect, item_width=50, item_height=50, padding=30)
+        stages = list(self.stages.values()) * 6
+        for rect, stage in zip(rects, stages):
+            image = stage.thumbnail_image(*rect.size)
+            sprite = RichSprite(
+                x=rect.centerx,
+                y=rect.centery,
+                image=image,
+                press_fnc=self._select_stage,
+                press_fnc_args=(stage,)
+            )
+            self.hoverable(sprite, self.outline_image)
+            self.middle_sprites.add(sprite)
+    
+    def _set_stage_view_thumbnails(self):
+        """画面左側に選択したステージのサムネイルを表示する
+        """
+        rect = self.stage_view_rect
+        w = h = min(int(rect.w * 0.7), int(rect.h * 0.7))
+        rect = layout_rects(self.stage_view_rect, cols=1, rows=1, item_width=w, item_height=h)[0]
+        # 左側用の画像の辞書を作成
+        self.stage_view_sprites = {
+            stage: RichSprite(*rect.center, image=stage.thumbnail_image(rect.w, rect.h))
+            for stage in self.stages.values()
+        }
+
+    def _set_stock_btn(self):
+        print(self.front_sprites)
+        rect = self.display.get_rect()
+        x = rect.centerx
+        y = rect.h * 2 // 3
+        counter_btn, get_count_fnc = make_counter_btn(x, y, self.stock_font, min_=1, max_=5)
+        self.get_count_fnc = get_count_fnc
+        self.front_sprites.add(counter_btn)
+        print(self.front_sprites)
+        print("set counter")
+
+    def main(self):
+        while self.run:
+            self.get_events()
+            self.clock.tick(self.fps)
+            self.update()
+            self.draw()
+            # print(self.front_sprites)
+            pygame.display.update()
+
 
 def get_sample_stages(json_path="./jsons/stage.json"):
     """ json stages の サンプルを読み込む

@@ -30,10 +30,10 @@ class BaseScreen:
         self.run = True
         self.next_screen = Screen.QUIT
     
-    def hoverable(self, rich_sprite, outline_image, group=None):
+    def hoverable(self, rich_sprite, outline_image, group=None, border_width: int=5):
         if group is None:
             group = self.middle_sprites
-        outlines = make_outline_splites(rich_sprite.rect, outline_image)
+        outlines = make_outline_splites(rich_sprite.rect, outline_image, border_width=border_width)
         rich_sprite.change_enter_fnc(group.add, (outlines,))
         rich_sprite.change_exit_fnc(group.remove, (outlines,))
     
