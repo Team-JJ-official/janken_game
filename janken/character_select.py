@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import json
 
 import pygame
@@ -34,43 +34,49 @@ class BadgeSpriteGroup(Group):
     
     def replace_circle(self, image: pygame.surface.Surface):
         sprite = SimpleSprite(rect=image.get_rect(), image=image)
-        sprite.rect.center = self.badge_sprite.center
-        self.badge_sprite.add(sprite)
+        sprite.rect.center = self.badgesprite.center
+        self.badgesprite.add(sprite)
         self.add(sprite)
 
     def replace_text(self, text = "", font_size = int(1e5), color = (0, 0, 0)):
-        if self.badge.sprite.rect.height < font_size:
-            font_size = int(2 ** 0.5 * self.badge.sprite.rect.height)
+        if self.badgesprite.sprite.rect.height < font_size:
+            font_size = int(2 ** 0.5 * self.badgesprite.sprite.rect.height)
         text_sprite = TextSprite(
-            x = self.badge.sprite.rect.centerx,
-            y = self.badge.sprite.rect.centery,
+            x = self.badgesprite.sprite.rect.centerx,
+            y = self.badgesprite.sprite.rect.centery,
             text = text,
             font = pygame.font.Font(None, font_size),
             color = color,
             align = "center",
             vertical_align = "middle"
         )
-        if 2 ** 0.5 * self.badge.sprite.rect.width < text_sprite.rect.width:
+        if 2 ** 0.5 * self.badgesprite.sprite.rect.width < text_sprite.rect.width:
             print("dekasugi")
-            self.text.sprite.add(None)
-        self.text.add(text_sprite)
-        self.add(self.text)
+            self.textsprite.sprite.add(None)
+        self.textsprite.add(text_sprite)
 
     def __init__(self, r = 10, color = (255, 255, 255), text = "", font_size = int(1e5)):
         super().__init__()
-        self.badge = GroupSingle(self.BadgeSprite(r, color))
-        self.text = GroupSingle(None)
-        self.text = self.replace_text(text, font_size)
-        self.add(self.badge)
+        self.badgesprite = GroupSingle(self.BadgeSprite(r, color))
+        self.textsprite = GroupSingle(None)
+        self.replace_text(text, font_size)
     
+    def draw(self, surface):
+        self.badgesprite.draw(surface)
+        self.textsprite.draw(surface)
+    
+    @property
+    def center(self):
+        return self.badgesprite.sprite.rect.center
+        
+    @center.setter
+    def center(self, center: Tuple[int, int]):
+        self.badgesprite.sprite.rect.center = center
+        self.textsprite.sprite.rect.center = center
 
-class BaseScreen2(BaseScreen):
-    def __init__(self):
-        super().__init__()
-        self.groups = [Group() for i in range(9)]
 
 
-class CharacterSelectScreen(BaseScreen2):
+class CharacterSelectScreen(BaseScreen):
     def __init__(self, game_config, gameplayer1, gameplayer2):
         super().__init__()
 
@@ -134,6 +140,7 @@ class CharacterSelectScreen(BaseScreen2):
 
     def _press_character(self, character: Character, rect: pygame.rect.Rect):
         character.select_voice.play()
+        self.badge1.center = rect.topleft
 
     def _set_characters_area(self):
         self.character_select_rect = pygame.rect.Rect(
@@ -157,6 +164,7 @@ class CharacterSelectScreen(BaseScreen2):
             self.hoverable(sprite, self.outline_image)
             sprite.change_press_fnc(self._press_character, (character, rect))
             self.front_sprites.add(sprite)
+        self.badge1.center = self.character_rects[0].topleft
 
     def _set_player_select_area(self):
         self.player_select_rect = pygame.rect.Rect(

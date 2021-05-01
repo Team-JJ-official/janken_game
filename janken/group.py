@@ -238,7 +238,7 @@ class GroupSingle(Group):
                 self.empty()
                 self.add_internal(obj)
                 obj.add_internal(self)
-            if isinstance(obj, Group):
+            elif isinstance(obj, Group):
                 self.empty()
                 self.add_internal(obj)
 
