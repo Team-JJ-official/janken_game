@@ -211,8 +211,6 @@ class CharacterSelectScreen(BaseScreen):
         bgm.set_volume(0.1)
         bgm.play()
 
-        
-
 
     def _adapt_display(self):
         pygame.display.set_caption("Character Select")
@@ -235,12 +233,7 @@ class CharacterSelectScreen(BaseScreen):
     def main(self):
         self._adapt_display()
         images = []
-        while self.run:
-            self.get_events()
-            self.update()
-            self.draw()
-            pygame.display.update()
-            self.clock.tick(self.fps)
+        super().main()
             
 def main():
     from game_config import GameConfig

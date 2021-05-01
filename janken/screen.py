@@ -74,6 +74,14 @@ class BaseScreen:
         self.background_sprites.draw(self.display)
         self.middle_sprites.draw(self.display)
         self.front_sprites.draw(self.display)
+    
+    def main(self):
+        while self.run:
+            self.get_events()
+            self.update()
+            self.draw()
+            pygame.display.update()
+            self.clock.tick(self.fps)
 
         # for group in self.groups:
         #     if len(group):

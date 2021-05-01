@@ -22,14 +22,6 @@ class OptionScreen(BaseScreen):
         return_btn.change_press_fnc(self._goto_title)
         self.middle_sprites.add(return_btn)
     
-    def main(self):
-        while self.run:
-            self.get_events()
-            self.update()
-            self.draw()
-            pygame.display.update()
-            self.clock.tick(self.fps)
-
 
 if __name__ == '__main__':
     from game_config import GameConfig

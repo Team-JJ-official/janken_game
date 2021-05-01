@@ -43,12 +43,7 @@ class LoadingScreen(BaseScreen):
         # 全てのローディングはスレッドで
         thread = Thread(target=self.init)
         thread.start()
-        while self.run:
-            self.get_events()
-            self.update()
-            self.draw()
-            pygame.display.update()
-            self.clock.tick(60)
+        super().main()
 
 if __name__ == "__main__":
     from stage_select import StageSelectScreen
