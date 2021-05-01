@@ -16,14 +16,13 @@ from group import Group, GroupSingle
 
 
 class BadgeSpriteGroup(Group):
-    """
-    背景と文字のspriteを1組のみ持つクラス\\
-    """
     class BadgeSprite(pygame.sprite.Sprite):
         """
-        colorで内部を塗りつぶした半径rの円のspriteを作成する\\
-        rectの初期値は(left=0, top=0, width=height=r)\\
+        colorで内部を塗りつぶした半径rの円のspriteを作成する.
+
+        rectの初期値は(left=0, top=0, width=height=r)
         """
+
         def __init__(self, r = 10, color = (255, 255, 255)):
             super().__init__()
             badge = pygame.Surface((2*r, 2*r))
@@ -33,12 +32,24 @@ class BadgeSpriteGroup(Group):
             self.image = badge
     
     def replace_circle(self, image: pygame.surface.Surface):
+        """[summary].
+
+        Args:
+            image (pygame.surface.Surface): [description].
+        """
         sprite = SimpleSprite(rect=image.get_rect(), image=image)
         sprite.rect.center = self.badgesprite.center
         self.badgesprite.add(sprite)
         self.add(sprite)
 
     def replace_text(self, text = "", font_size = int(1e5), color = (0, 0, 0)):
+        """[summary].
+
+        Args:
+            text (str, optional): [description]. Defaults to "".
+            font_size ([type], optional): [description]. Defaults to int(1e5).
+            color (tuple, optional): [description]. Defaults to (0, 0, 0).
+        """
         if self.badgesprite.sprite.rect.height < font_size:
             font_size = int(2 ** 0.5 * self.badgesprite.sprite.rect.height)
         text_sprite = TextSprite(
@@ -56,6 +67,14 @@ class BadgeSpriteGroup(Group):
         self.textsprite.add(text_sprite)
 
     def __init__(self, r = 10, color = (255, 255, 255), text = "", font_size = int(1e5)):
+        """[summary]
+
+        Args:
+            r (int, optional): [description]. Defaults to 10.
+            color (tuple, optional): [description]. Defaults to (255, 255, 255).
+            text (str, optional): [description]. Defaults to "".
+            font_size ([type], optional): [description]. Defaults to int(1e5).
+        """
         super().__init__()
         self.badgesprite = GroupSingle(self.BadgeSprite(r, color))
         self.textsprite = GroupSingle(None)
@@ -68,7 +87,7 @@ class BadgeSpriteGroup(Group):
     @property
     def center(self):
         return self.badgesprite.sprite.rect.center
-        
+
     @center.setter
     def center(self, center: Tuple[int, int]):
         self.badgesprite.sprite.rect.center = center
@@ -141,6 +160,7 @@ class CharacterSelectScreen(BaseScreen):
     def _press_character(self, character: Character, rect: pygame.rect.Rect):
         character.select_voice.play()
         self.badge1.center = rect.topleft
+        # self.gameplayer1.character = character
 
     def _set_characters_area(self):
         self.character_select_rect = pygame.rect.Rect(
