@@ -176,6 +176,17 @@ class RichSprite(Sprite):
         exit_fnc_args: Optional[tuple]=None, \
         press_fnc: Optional[Callable]=None, \
         press_fnc_args: Optional[tuple]=None):
+        """高機能スプライト
+
+        Args:
+            x (int): [description]
+            y (int): [description]
+            align (str, optional): [description]. Defaults to "center".
+            vertical_align (str, optional): [description]. Defaults to "middle".
+            images (List[Surface], optional): [description]. Defaults to None.
+            multiple (float, optional): [description]. Defaults to 1.0.
+            interval (int, optional): [description]. Defaults to 0.
+        """
         if image is None and images is None:
             raise(TypeError("'image', 'images' のどちらか一方は None でない必要があります."))
         super().__init__()
@@ -229,6 +240,12 @@ class RichSprite(Sprite):
         self.pressed = False
         self.check_press = self.press_fnc is not None
         self.press_fnc_args = press_fnc_args
+    
+    def next_image_index(self):
+        self.image_index = (self.image_index + 1) % len(self.images)
+    
+    def back_image_index(self):
+        self.image_index = (self.image_index - 1) % len(self.images)
 
     def update(self):
         """更新処理

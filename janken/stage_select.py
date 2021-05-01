@@ -350,6 +350,7 @@ class StageSelectScreen(BaseScreen):
     
     def init(self):
         self._split_area()
+        self._set_bg()
         self._set_next_back_btn()
         self._set_stages()
         self._set_stage_view_thumbnails()
@@ -393,6 +394,10 @@ class StageSelectScreen(BaseScreen):
             rect.height - self.stage_view_rect.height
         )
         self.area = [self.stage_view_rect, self.stage_select_rect, self.stock_rect]
+
+    def _set_bg(self):
+        bg_sprite = SimpleSprite(self.display.get_rect(), self.bg_image)
+        self.background_sprites.add(bg_sprite)
 
     def _set_next_back_btn(self):
         """next, backボタンの設置
