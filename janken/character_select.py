@@ -1,5 +1,4 @@
-from __future__ import annotations
-from typing import Dict, List, Union, Type
+from typing import Dict, List
 import json
 
 import pygame
@@ -13,201 +12,8 @@ from character import Character
 from player import Player
 from transform import surface_fit_to_rect
 
-class Group(pygame.sprite.AbstractGroup):
+from group import Group, GroupSingle
 
-    def __init__(self):
-        super().__init__()
-        self.groupdict = {}
-        self.lostgroups = []
-    
-    def sprites(self):
-        return list(self.spritedict)
-    
-    def groups(self):
-        return list(self.groupdict)
-
-    def add_internal(self, obj: Union[pygame.sprite.Sprite, Group]):
-        """
-        内部に[Sprite, Group]を追加する
-
-        [Sprite, Group]のみを追加し，それ以外は無視
-        """
-        if isinstance(obj, Group):
-            self.groupdict[obj] = 0
-        elif isinstance(obj, pygame.sprite.Sprite):
-            self.spritedict[obj] = 0
-
-    def remove_internal(self, obj: Union[pygame.sprite.Sprite, Group]):
-        """
-        指定した[Sprite, Group]を削除する
-
-        [Sprite, Group]以外は無視
-        """
-        if isinstance(obj, Group):
-            lost_rect = self.groupdict[obj]
-            if lost_rect:
-                self.lostgroups.append(lost_rect)
-            del self.groupdict[obj]
-        elif isinstance(obj, pygame.sprite.Sprite):
-            lost_rect = self.spritedict[obj]
-            if lost_rect:
-                self.lostsprites.append(lost_rect)
-            del self.spritedict[obj]
-            
-    def has_internal(self, obj: Union[pygame.sprite.Sprite, Group]):
-        """
-        引数と同じ要素を持っているか返す
-        
-        [Sprite, Group]以外はFalse
-        """
-        if isinstance(obj, Group):
-            return obj in self.groupdict
-        if isinstance(obj, pygame.sprite.Sprite):
-            return obj in self.spritedict
-        return False
-
-    def copy(self):
-        """copy a group with all the same sprites
-
-        Group.copy(): return Group
-
-        Returns a copy of the group that is an instance of the same class
-        and has the same sprites in it.
-
-        よくわからん
-        """
-        return self.__class__(self.sprites()) # noqa pylint: disable=too-many-function-args; needed because copy() won't work on AbstractGroup
-
-    def __iter__(self):
-        """
-        groupが持っているspriteのみのイテレータを返す
-
-        groupsも参照できるようにしたい
-        """
-        return iter(self.sprites())
-
-    def add(self, *objects):
-        """
-        Groupに要素を追加する
-
-        iterableなデータ構造も追加可能
-        """
-        for obj in objects:
-            try:
-                # iterableなデータが渡された場合
-                self.add(*obj)
-            except (TypeError, AttributeError):
-                # itarableではない場合
-                # [Sprite, Group]のみ追加
-                if not self.has_internal(obj):
-                    self.add_internal(obj)
-                    if isinstance(obj, pygame.sprite.Sprite):
-                        obj.add_internal(self)
-
-    def remove(self, *objects):
-        """
-        Groupから要素を削除する
-
-        iterableなデータ構造を渡す場合，含まれる要素全てを削除
-        """
-        for obj in objects:
-            try:
-                self.remove(*obj)
-            except (TypeError, AttributeError):
-                if self.has_internal(obj):
-                    self.remove_internal(obj)
-                    if isinstance(obj, pygame.sprite.Sprite):
-                        obj.remove_internal(self)
-
-    def has(self, *objects):
-        """
-        要素がGroup内に存在しているかどうか求める
-
-        渡す要素を全て含む場合のみTrue
-        """
-        if not objects:
-            return False  # return False if no sprites passed in
-        ans = True
-        for obj in objects:
-            try:
-                if not self.has(*obj):
-                    return False
-            except (TypeError, AttributeError):
-                if not self.has_internal(obj):
-                    ex = False
-                    for grp in self.groups:
-                        if grp.has(obj):
-                            ex = True
-                            break
-                    if not ex:
-                        return False
-        return True
-
-    def update(self, *args, **kwargs):
-        """
-        メンバ[Sprite, Group]のupdateを呼び出す
-
-        (Spriteのupdateを先に実行)
-        """
-        for sprite in self.sprites():
-            sprite.update(*args, **kwargs)
-        for group in self.groups():
-            group.update(*args, **kwargs)
-
-    def draw(self, surface):
-        super().draw(surface)
-        for group in self.groups():
-            group.draw()
-        self.lostgroups = []
-
-    def clear(self, surface, bgd):
-        """erase the previous position of all sprites
-
-        Group.clear(surface, bgd): return None
-
-        Clears the area under every drawn sprite in the group. The bgd
-        argument should be Surface which is the same dimensions as the
-        screen surface. The bgd could also be a function which accepts
-        the given surface and the area to be cleared as arguments.
-
-        これよくわからん
-
-        """
-        if callable(bgd):
-            for lost_clear_rect in self.lostsprites:
-                bgd(surface, lost_clear_rect)
-            for clear_rect in self.spritedict.values():
-                if clear_rect:
-                    bgd(surface, clear_rect)
-        else:
-            surface_blit = surface.blit
-            for lost_clear_rect in self.lostsprites:
-                surface_blit(bgd, lost_clear_rect, lost_clear_rect)
-            for clear_rect in self.spritedict.values():
-                if clear_rect:
-                    surface_blit(bgd, clear_rect, clear_rect)
-
-    def empty(self):
-        """remove all sprites, groups
-
-        Group.empty(): return None
-
-        Removes all the sprites, groups from the group.
-
-        """
-        self.remove(self.sprites)
-        self.remove(self.groups)
-
-    def __nonzero__(self):
-        return truth(self.sprites())
-
-    __bool__ = __nonzero__
-
-    def __len__(self):
-        return len(self.sprites()) + len(self.groups())
-
-    def __repr__(self):
-        return "<%s(%d sprites, %d groups)>" % (self.__class__.__name__, len(self.sprites()), len(self.groups()))
 
 class BadgeSpriteGroup(Group):
     """
@@ -252,8 +58,8 @@ class BadgeSpriteGroup(Group):
 
     def __init__(self, r = 10, color = (255, 255, 255), text = "", font_size = int(1e5)):
         super().__init__()
-        self.badge = pygame.sprite.GroupSingle(self.BadgeSprite(r, color))
-        self.text = pygame.sprite.GroupSingle(None)
+        self.badge = GroupSingle(self.BadgeSprite(r, color))
+        self.text = GroupSingle(None)
         self.text = self.replace_text(text, font_size)
         self.add(self.badge)
     
@@ -390,6 +196,7 @@ class CharacterSelectScreen(BaseScreen2):
         print(self.front_sprites)
         self.front_sprites.add(self.badge1)
         print(self.front_sprites)
+        print(self.front_sprites.sprites())
 
         self._set_characters_area()
         self._set_player_select_area()
