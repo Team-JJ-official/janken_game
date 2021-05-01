@@ -3,6 +3,7 @@ from enum import Enum
 import pygame
 
 from sprites import make_outline_splites
+from group import Group as MyGroup
 
 class Screen(Enum):
     START = 0
@@ -21,9 +22,12 @@ class BaseScreen:
             pygame.display.set_mode((500, 500))
             pygame.display.set_caption("sample")
         self.display = pygame.display.get_surface()
-        self.front_sprites = pygame.sprite.Group()
-        self.middle_sprites = pygame.sprite.Group()
-        self.background_sprites = pygame.sprite.Group()
+        # self.front_sprites = pygame.sprite.Group()
+        # self.middle_sprites = pygame.sprite.Group()
+        # self.background_sprites = pygame.sprite.Group()
+        self.front_sprites = MyGroup()
+        self.middle_sprites = MyGroup()
+        self.background_sprites = MyGroup()
         # self.groups = [pygame.sprite.Group() for i in range(9)]
         self.fps = 60
         self.delta_time = 1 / self.fps
