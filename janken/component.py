@@ -161,12 +161,15 @@ def make_counter_btn(x: int, y: int, font: pygame.font.Font, align: str="center"
     ]
     x, y = rect.topleft
     left_image = Surface((w, h)).convert_alpha()
+    left_image.fill((255, 255, 255))
+    left_image.set_colorkey(left_image.get_at((0, 0)))
     pygame.gfxdraw.filled_polygon(left_image, points, color)
     # left_image = font.render("<", True, color)
     btn = RichSprite(x-5, y, align="right", vertical_align="top", image=left_image, press_fnc=counter_sprite._count_down)
     group.add(btn)
     x, y = rect.topright
     right_image = pygame.transform.flip(left_image, True, False)
+    right_image.set_colorkey(right_image.get_at((0, 0)))
     btn = RichSprite(x+5, y, align="left", vertical_align="top", image=right_image, press_fnc=counter_sprite._count_up)
     group.add(btn)
     return group, counter_sprite.get_count
