@@ -3,6 +3,7 @@ from loading import LoadingScreen
 from title import TitleScreen
 from stage_select import StageSelectScreen
 from character_select import CharacterSelectScreen
+from option import OptionScreen
 
 class Game:
     class Gameplayer:
@@ -29,7 +30,7 @@ class Game:
         self.stage_select_screen = StageSelectScreen
         self.game_screen = None
         self.result_screen = None
-        self.option_screen = None
+        self.option_screen = OptionScreen
 
     def main(self):
         try:
@@ -56,7 +57,7 @@ class Game:
             elif next_screen == Screen.RESULT:
                 now = self.result_screen(self.gameplayer1, self.gameplayer2, self.gamesetting)
             elif next_screen == Screen.OPTION:
-                now = self.option_screen()
+                now = self.option_screen(self.game_config)
             elif next_screen == Screen.QUIT:
                 break
 
