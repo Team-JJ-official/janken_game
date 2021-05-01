@@ -85,7 +85,7 @@ class Group(pygame.sprite.AbstractGroup):
         デフォルトでは追加する要素がメンバGroup内に存在する場合は追加しない
         """
         for obj in objects:
-            if not self.has_internal(obj) or multi:
+            if not self.has(obj) or multi:
                 # [Sprite, Group]のみ追加
                 if isinstance(obj, pygame.sprite.Sprite):
                     self.add_internal(obj)
@@ -113,11 +113,11 @@ class Group(pygame.sprite.AbstractGroup):
                     obj.remove_internal(self)
                 elif isinstance(obj, Group):
                     self.remove_internal(obj)
-                else:
-                    try:
-                        self.remove(*obj)
-                    except:
-                        pass
+            else:
+                try:
+                    self.remove(*obj)
+                except:
+                    pass
 
     def has(self, *objects):
         """
@@ -127,21 +127,25 @@ class Group(pygame.sprite.AbstractGroup):
         """
         if not objects:
             return False  # return False if no sprites passed in
-        ans = True
+        
         for obj in objects:
-            try:
-                if not self.has(*obj):
-                    return False
-            except (TypeError, AttributeError):
+            if isinstance(obj, pygame.sprite.Sprite) or isinstance(obj, Group):
                 if not self.has_internal(obj):
-                    ex = False
-                    for grp in self.groups:
+                    exist = False
+                    for grp in self.groups():
                         if grp.has(obj):
-                            ex = True
+                            exist = True
                             break
-                    if not ex:
+                    if not exist:
                         return False
+            else:
+                try:
+                    if not self.has(*obj):
+                        return False
+                except:
+                    return False
         return True
+
 
     def update(self, *args, **kwargs):
         """
@@ -195,8 +199,8 @@ class Group(pygame.sprite.AbstractGroup):
         Removes all the sprites, groups from the group.
 
         """
-        self.remove(self.sprites)
-        self.remove(self.groups)
+        self.remove(self.sprites())
+        self.remove(self.groups())
 
     def __nonzero__(self):
         return truth(self.sprites())
@@ -241,15 +245,19 @@ class GroupSingle(Group):
 if __name__ == '__main__':
     rootgroup = Group()
     group1 = Group()
+    groupx = Group()
     group2 = GroupSingle()
     groups = [Group() for _ in range(5)]
     print(rootgroup)
     rootgroup.add(group1)
-    rootgroup.add(group1)
+    rootgroup.add(groupx)
     print(rootgroup)
     rootgroup.add(group2)
     print(rootgroup)
     rootgroup.add(groups)
     print(rootgroup)
+    rootgroup.empty()
+    print(rootgroup)
+
     
     
