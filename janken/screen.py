@@ -21,27 +21,27 @@ class BaseScreen:
             pygame.display.set_mode((500, 500))
             pygame.display.set_caption("sample")
         self.display = pygame.display.get_surface()
-        # self.front_sprites = pygame.sprite.Group()
-        # self.middle_sprites = pygame.sprite.Group()
-        # self.background_sprites = pygame.sprite.Group()
-        self.groups = [pygame.sprite.Group() for i in range(9)]
+        self.front_sprites = pygame.sprite.Group()
+        self.middle_sprites = pygame.sprite.Group()
+        self.background_sprites = pygame.sprite.Group()
+        # self.groups = [pygame.sprite.Group() for i in range(9)]
         self.fps = 60
         self.delta_time = 1 / self.fps
         self.clock = pygame.time.Clock()
         self.run = True
         self.next_screen = Screen.QUIT
     
-    @property
-    def front_sprites(self) -> pygame.sprite.Group:
-        return self.groups[7]
+    # @property
+    # def front_sprites(self) -> pygame.sprite.Group:
+    #     return self.groups[7]
     
-    @property
-    def middle_sprites(self) -> pygame.sprite.Group:
-        return self.groups[4]
+    # @property
+    # def middle_sprites(self) -> pygame.sprite.Group:
+    #     return self.groups[4]
     
-    @property
-    def background_sprites(self) -> pygame.sprite.Group:
-        return self.groups[1]
+    # @property
+    # def background_sprites(self) -> pygame.sprite.Group:
+    #     return self.groups[1]
     
     def hoverable(self, rich_sprite, outline_image, group=None, border_width: int=5):
         if group is None:
@@ -67,10 +67,10 @@ class BaseScreen:
 
     def draw(self):
         self.display.fill((255, 255, 255))
-        # self.background_sprites.draw(self.display)
-        # self.middle_sprites.draw(self.display)
-        # self.front_sprites.draw(self.display)
+        self.background_sprites.draw(self.display)
+        self.middle_sprites.draw(self.display)
+        self.front_sprites.draw(self.display)
 
-        for group in self.groups:
-            if len(group):
-                group.draw(self.display)
+        # for group in self.groups:
+        #     if len(group):
+        #         group.draw(self.display)
