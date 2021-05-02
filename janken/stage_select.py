@@ -426,6 +426,10 @@ class StageSelectScreen(BaseScreen):
         """
         print("go to", next_screen)
         print("stage: {}, stock: {}".format(self.selected_stage, self.get_count_fnc()))
+        # gamesettingに選択したステージ，ストック数を反映する
+        if self.gamesetting is not None:
+            self.gamesetting.stage = self.selected_stage
+            self.gamesetting.stock = self.get_count_fnc()
         self.next_screen = next_screen
         self.run = False
 
