@@ -8,6 +8,8 @@ from pygame.sprite import Sprite
 
 from sprites import TextSprite, PressRect
 from sprites import RichSprite, SimpleSprite, adjust_rect
+from group import Group
+from transform import surface_fit_to_rect
 
 Color = NewType("Color", Tuple[int, int, int])
 
@@ -173,6 +175,81 @@ def make_counter_btn(x: int, y: int, font: pygame.font.Font, align: str="center"
     btn = RichSprite(x+5, y, align="left", vertical_align="top", image=right_image, press_fnc=counter_sprite._count_up)
     group.add(btn)
     return group, counter_sprite.get_count
+
+
+class PlayerStockIcon(Group):
+    def __init__(self, left: int, top: int, game_player, image_height: int=50):
+        super().__init__()
+
+        self.game_player = game_player
+
+        surface = game_player.character.face_image
+        name = game_player.player.name
+        stock = game_player.stock
+
+        # キャラ画像
+        image_width = image_height
+        rect = Rect(left, top, image_width, image_height)
+        image = surface_fit_to_rect(surface, rect)
+        self.character_sprite = SimpleSprite(rect, image)
+        self.add(self.character_sprite)
+
+        # ストックの丸
+        self.stock = stock
+        self.stock_sprites = [Group() for i in range(stock)]
+        x, y = self.character_sprite.rect.bottomright
+        stock_radius = int(0.05 * image_height)
+        left, top = x, y - stock_radius * 2
+        for i in range(stock):
+            surface = Surface((stock_radius * 2, stock_radius * 2)).convert_alpha()
+            surface.fill((125, 125, 125))
+            surface.set_colorkey(surface.get_at((0, 0)))
+            pygame.gfxdraw.filled_circle(surface, stock_radius, stock_radius, stock_radius-1, (255, 255, 255))
+            stock_sprite = SimpleSprite(Rect(left, top, stock_radius * 2, stock_radius * 2), surface)
+            self.stock_sprites[i].add(stock_sprite)
+            print(self.stock_sprites[i])
+            left += stock_radius * 2
+
+        # プレイヤーネーム
+        font_size = int(0.2 * image_height)
+        font = pygame.font.Font(None, font_size)
+        left, bottom = self.character_sprite.rect.bottomright
+        bottom -= stock_radius * 2
+        self.player_name_sprite = TextSprite(
+            x=left,
+            y=bottom,
+            align="left",
+            vertical_align="bottom",
+            text=name,
+            font=font,
+            color=(255, 255, 255)
+        )
+        self.add(self.player_name_sprite)
+
+        # プレイヤーネームのbg
+        width = self.character_sprite.rect.w + max(stock_radius * 2 * stock, self.player_name_sprite.rect.w) + 10
+        height = self.character_sprite.rect.h
+        self.base_rect = Rect(*self.character_sprite.rect.topleft, width, height)
+        rect = self.base_rect
+        bg_image = Surface(rect.size).convert_alpha()
+        bg_image.fill((0, 0, 0))
+        bg_image.set_alpha(225)
+        bg_sprite = SimpleSprite(rect, bg_image)
+        self.bg_group = Group()
+        self.bg_group.add(bg_sprite)
+    
+    def change_stock_delta(delta: int):
+        self.stock += delta
+    
+    def draw(self, surface: Surface):
+        self.bg_group.draw(surface)
+        super().draw(surface)
+        for i in range(self.game_player.stock):
+            group = self.stock_sprites[i]
+            # print(group, end=", ")
+            group.draw(surface)
+        # print()
+
 
 if __name__ == "__main__":
     pygame.init()
