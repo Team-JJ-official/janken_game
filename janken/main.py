@@ -4,6 +4,7 @@ from title import TitleScreen
 from stage_select import StageSelectScreen
 from character_select import CharacterSelectScreen
 from option import OptionScreen
+from game import GameScreen
 
 class Game:
     class Gameplayer:
@@ -28,7 +29,7 @@ class Game:
         self.start_screen = TitleScreen
         self.character_select_screen = CharacterSelectScreen
         self.stage_select_screen = StageSelectScreen
-        self.game_screen = None
+        self.game_screen = GameScreen
         self.result_screen = None
         self.option_screen = OptionScreen
 
