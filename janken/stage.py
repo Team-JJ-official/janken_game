@@ -15,3 +15,6 @@ class Stage:
         x = rect.centerx - width // 2
         y = rect.centery - height // 2
         return Rect(max(0, x), max(0, y), min(rect.w, width), min(rect.h, height))
+    
+    def __repr__(self):
+        return "<Stage: {}>".format(self.name)
