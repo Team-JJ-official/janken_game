@@ -213,6 +213,9 @@ def get_sample_game_player(game_config, name: str="sample", stock: int=0):
             self.player = None
             self.character = None
             self.stock = 0
+        
+        def __repr__(self):
+            return self.player.name
 
     game_player = GamePlayer()
     game_player.character = game_config.characters["0"]

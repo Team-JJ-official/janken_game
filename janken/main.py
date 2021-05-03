@@ -12,6 +12,9 @@ class Game:
             self.player = None
             self.character = None
             self.stock = 0
+        
+        def __repr__(self):
+            return self.player.name
     
     class Gamesetting:
         def __init__(self):
