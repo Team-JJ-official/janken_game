@@ -8,7 +8,7 @@ from pygame.sprite import Sprite
 
 from sprites import TextSprite, PressRect
 from sprites import RichSprite, SimpleSprite, adjust_rect
-from group import Group
+from group import Group, GroupSingle
 from transform import surface_fit_to_rect
 
 Color = NewType("Color", Tuple[int, int, int])
@@ -175,6 +175,110 @@ def make_counter_btn(x: int, y: int, font: pygame.font.Font, align: str="center"
     btn = RichSprite(x+5, y, align="left", vertical_align="top", image=right_image, press_fnc=counter_sprite._count_up)
     group.add(btn)
     return group, counter_sprite.get_count
+
+def make_surface(size: Tuple[int, int], alpha: bool=True, used_colors: List[Color]=[], bg_color: Optional[Color]=None):
+    if bg_color is not None:
+        fill_color = bg_color
+    else:
+        used_colors = set(used_colors)
+        for i in range(256):
+            fill_color = (i, i, i)
+            if fill_color not in used_colors:
+                break
+    surface = Surface(size)
+    surface.fill(fill_color)
+    if pygame.display.get_init():
+        if alpha and bg_color is None:
+            surface.convert_alpha()
+            surface.set_colorkey(surface.get_at((0, 0)))
+        else:
+            surface.convert()
+
+    return surface
+
+def make_left_triangle(size: Tuple[int, int], color: Color=(0, 0, 0)):
+    surface = make_surface(size, alpha=True, used_colors=[color], bg_color=None)
+    w, h = size
+    points = [
+        (1, h//2),
+        (w-1, h-1),
+        (w-1, 1)
+    ]
+    pygame.gfxdraw.filled_polygon(surface, points, color)
+    return surface
+
+class ValuesGroup(Group):
+    def __init__(self, base_rect: Rect, values: List[Any], labels: Optional[List[str]]=None, font_name: Optional[str]=None, color: Color=(255, 255, 255), bg_color: Color=(0, 0, 0), bg_alpha: float=1.0, defalut_i: int=0):
+        super().__init__()
+        self.values = values
+        self.i = defalut_i
+        self.base_rect = base_rect
+        if defalut_i < 0 or len(values) <= defalut_i:
+            raise(ValueError("default_i が values のリストの範囲を超えています."))
+        
+        # ラベルのSpriteのリストを作成
+        self.labels = labels if labels else [str(v) for v in values]
+        font = pygame.font.Font(font_name, base_rect.h)
+        label_surfaces = [font.render(label, True, color) for label in self.labels]
+        self.label_sprites = []
+        for surface in label_surfaces:
+            rect = surface.get_rect()
+            rect.center = base_rect.center
+            self.label_sprites.append(SimpleSprite(rect, surface))
+
+        # 左右のボタンの作成
+        size = (int(base_rect.h * 0.5), int(base_rect.h * 0.8))
+        left_btn_surface_inactive = make_left_triangle(size, color=(192, 192, 192))
+        left_btn_surface_active = make_left_triangle(size, color=(255, 140, 0))
+        rect = base_rect
+        self.left_btn_active = RichSprite(*rect.midleft, align="left", vertical_align="middle", image=left_btn_surface_active, press_fnc=self._left)
+        self.left_btn_inactive = RichSprite(*rect.midleft, align="left", vertical_align="middle", image=left_btn_surface_inactive, press_fnc=self._left)
+
+        self.right_btn_active = RichSprite(*rect.midright, align="right", vertical_align="middle", image=pygame.transform.flip(left_btn_surface_active, True, False), press_fnc=self._right)
+        self.right_btn_inactive = RichSprite(*rect.midright, align="right", vertical_align="middle", image=pygame.transform.flip(left_btn_surface_inactive, True, False), press_fnc=self._right)
+
+        # 背景作成
+        size = (base_rect.w, base_rect.h)
+        bg_surface = make_surface(size, alpha=False, bg_color=bg_color)
+        bg_sprite = SimpleSprite(base_rect, bg_surface)
+        self.add(bg_sprite)
+
+        # 表示のためのグループの作成と追加
+        self.left_btn = GroupSingle()
+        self.right_btn = GroupSingle()
+        self.single_group = GroupSingle()
+        self.add(self.left_btn)
+        self.add(self.right_btn)
+        self.add(self.single_group)
+
+        # 初期化
+        self._update_images()
+    
+    def _update_images(self):
+        self.single_group.add(self.label_sprites[self.i])
+        if self.i == 0:
+            self.left_btn.add(self.left_btn_inactive)
+        else:
+            self.left_btn.add(self.left_btn_active)
+        if self.i + 1 == len(self.values):
+            self.right_btn.add(self.right_btn_inactive)
+        else:
+            self.right_btn.add(self.right_btn_active)
+    
+    def get_value(self):
+        return self.values[self.i]
+    
+    def _left(self):
+        if self.i > 0:
+            self.i -= 1
+            self._update_images()
+        
+    def _right(self):
+        l = len(self.values) - 1
+        if self.i < l:
+            self.i += 1
+            self._update_images()
+
 
 
 class PlayerStockIcon(Group):
