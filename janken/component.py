@@ -1,4 +1,4 @@
-from typing import Tuple, NewType, Optional
+from typing import Tuple, NewType, Optional, Dict, Callable, Any, Union, List
 
 import pygame
 import pygame.gfxdraw
@@ -249,6 +249,73 @@ class PlayerStockIcon(Group):
             # print(group, end=", ")
             group.draw(surface)
         # print()
+
+
+class KeyHandler(Group):
+    def __init__(self, key_to_fnc_dic: Dict[int, Tuple[Callable, Any]]):
+        """キー入力に関数を割り当てる部品
+
+        Args:
+            key_to_fnc_dic (dict): pygame.K_***がキー，関数，引数のタプルがバリューの辞書
+        """
+        super().__init__()
+        self.key_to_fnc_dic = key_to_fnc_dic
+        self.waiting_inputs = True
+        self.pressed = {key: False for key in self.key_to_fnc_dic.keys()}
+    
+    def stop(self):
+        self.waiting_inputs = False
+    
+    def resume(self):
+        self.waiting_inputs = True
+    
+    def update(self):
+        if self.waiting_inputs:
+            key_pressed = pygame.key.get_pressed()
+            for key, (fnc, args) in self.key_to_fnc_dic.items():
+                if not self.pressed[key] and key_pressed[key]:  # 押した瞬間のみ
+                    self.pressed[key] = True
+                elif self.pressed[key] and not key_pressed[key]: # 離した瞬間のみ
+                    self.pressed[key] = False
+                    fnc(args)
+                    self.stop()
+
+class Checker(Group):
+    def __init__(self, check_fncs: Union[Callable, List[Callable]], fnc: Callable, fnc_args: Any=None, stop_when_call_fnc=True):
+        """チェック関数が全てTrueのときにfnc(fnc_args)を呼び出す部品
+
+        Args:
+            check_fncs (Union[Callable, List[Callable]]): チェックする関数(のリスト)
+            fnc (Callable): チェックを通った場合に呼ばれる関数
+            fnc_args (Any, optional): チェック通った場合に呼ばれる関数に渡される引数. Noneの場合は渡されない. Defaults to None.
+            stop_when_call_fnc (bool, optional): fncを呼び出した後にチェックをやめるかどうか. Defaults to True.
+        """
+        super().__init__()
+
+        self.do_check = True
+        self.check_fncs = check_fncs if type(check_fncs) is list else [check_fncs]
+        self.fnc = fnc
+        self.fnc_args = fnc_args
+        self.stop_when_call_fnc = stop_when_call_fnc
+    
+    def stop(self):
+        self.do_check = False
+    
+    def resume(self):
+        self.do_check = True
+    
+    def update(self):
+        if self.do_check:
+            if all(fnc() for fnc in self.check_fncs):
+                # チェック作業を一旦停止する
+                if self.stop_when_call_fnc:
+                    self.stop()
+                # 関数を呼び出す
+                if self.fnc_args is not None:
+                    self.fnc(self.fnc_args)
+                else:
+                    self.fnc()
+
 
 
 if __name__ == "__main__":
