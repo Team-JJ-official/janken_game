@@ -46,7 +46,7 @@ class Game:
             print("Loading not done.")
             return
         
-        now = self.loading_screen()
+        now = self.start_screen(self.game_config)
         while True:
             now.main()
             next_screen = now.next_screen
