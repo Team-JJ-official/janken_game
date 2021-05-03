@@ -13,6 +13,7 @@ from sprites import HoverRect, PressRect, SimpleSprite, TextSprite, make_outline
 from sprites import RichSprite, layout_rects
 from component import CounterBtn
 from component import make_counter_btn
+from component import ValuesGroup
 from game_config import GameConfig
 
 
@@ -355,6 +356,8 @@ class StageSelectScreen(BaseScreen):
         self._set_stages()
         self._set_stage_view_thumbnails()
         self._set_stock_btn()
+
+        self._select_stage(list(self.stages.values())[0])
     
     def load_sounds(self, game_config: GameConfig):
         """サウンドを読み込む
@@ -425,11 +428,11 @@ class StageSelectScreen(BaseScreen):
         """画面遷移する
         """
         print("go to", next_screen)
-        print("stage: {}, stock: {}".format(self.selected_stage, self.get_count_fnc()))
+        print("stage: {}, stock: {}".format(self.selected_stage, self.stock_btn.get_value()))
         # gamesettingに選択したステージ，ストック数を反映する
         if self.gamesetting is not None:
             self.gamesetting.stage = self.selected_stage
-            self.gamesetting.stock = self.get_count_fnc()
+            self.gamesetting.stock = self.stock_btn.get_value()
         self.next_screen = next_screen
         self.run = False
 
@@ -476,15 +479,17 @@ class StageSelectScreen(BaseScreen):
         }
 
     def _set_stock_btn(self):
-        print(self.front_sprites)
         rect = self.display.get_rect()
         x = rect.centerx
         y = rect.h * 2 // 3
-        counter_btn, get_count_fnc = make_counter_btn(x, y, self.stock_font, min_=1, max_=5)
-        self.get_count_fnc = get_count_fnc
-        self.front_sprites.add(counter_btn)
-        print(self.front_sprites)
-        print("set counter")
+        rect = Rect(0, 0, 300, 50)
+        rect.center = (x, y)
+        self.stock_btn = ValuesGroup(rect, list(range(1, 6)), color=(0, 0, 0), bg_color=(255, 255, 255), defalut_i=2)
+        self.middle_sprites.add(self.stock_btn)
+        # counter_btn, get_count_fnc = make_counter_btn(x, y, self.stock_font, min_=1, max_=5)
+        # self.get_count_fnc = get_count_fnc
+        # self.front_sprites.add(counter_btn)
+        # print("set counter")
 
     def main(self):
         while self.run:
