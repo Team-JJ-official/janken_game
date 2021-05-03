@@ -206,16 +206,15 @@ class CharacterSelectScreen(BaseScreen):
         self.front_sprites.add(left)
 
     def _set_bgm(self):
-        sounds = self.game_config.sounds
-        bgm = sounds["menu"]
-        bgm.set_volume(0.1)
-        bgm.play()
+        self.bgm: pygame.mixer.Sound = self.game_config.sounds["menu"]
+        self.bgm.set_volume(0.1)
+        self.bgm.play()
 
 
     def _adapt_display(self):
         pygame.display.set_caption("Character Select")
         
-        bg_image = pygame.image.load("./images/components/bg.jpeg")
+        bg_image = self.game_config.components["background"]
         bg_image = pygame.transform.scale(bg_image, self.display_rect.size)
         bg_sprite = SimpleSprite(rect=self.display_rect, image=bg_image)
         self.background_sprites.add(bg_sprite)
@@ -228,7 +227,6 @@ class CharacterSelectScreen(BaseScreen):
         self._set_player_select_area()
         self._set_next_btn()
         self._set_back_btn()
-        self._set_bgm()
 
     def main(self):
         self._adapt_display()
@@ -240,7 +238,6 @@ def main():
     pygame.init()
     pygame.display.set_mode((700, 700))
     gc = GameConfig("./jsons/config.json")
-    gc.characters["1"] = gc.characters["0"]
     css = CharacterSelectScreen(gc, {}, {})
     css.main()
 

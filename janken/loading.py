@@ -33,7 +33,7 @@ class LoadingScreen(BaseScreen):
     def init(self):
         """全てのローディング処理
         """
-        time.sleep(2)
+        time.sleep(3)
         pygame.font.init()
         self.game_config = GameConfig("./jsons/config.json")
         self.run = False
@@ -43,6 +43,10 @@ class LoadingScreen(BaseScreen):
         # 全てのローディングはスレッドで
         thread = Thread(target=self.init)
         thread.start()
+        
+        loading_voice = pygame.mixer.Sound("./sounds/loading.mp3")
+        loading_voice.set_volume(0.1)
+        loading_voice.play(loops=0)
         super().main()
 
 if __name__ == "__main__":

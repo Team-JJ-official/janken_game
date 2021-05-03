@@ -4,5 +4,8 @@
     },
     "menu": {
         "path": "./sounds/menu.mp3"
+    },
+    "loading": {
+        "path": "./sounds/loading.mp3"
     }
 }

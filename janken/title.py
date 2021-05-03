@@ -21,6 +21,8 @@ class TitleScreen(BaseScreen):
         self.font = pygame.font.SysFont(None, 80)
 
         self.press_rects = []
+
+        self.bgm = game_config.sounds["menu"]
         
         self.init()
     
@@ -29,6 +31,7 @@ class TitleScreen(BaseScreen):
         self._set_title()
         self._set_start_btn()
         self._set_option_btn()
+        self._set_bgm()
     
 
     def _set_background(self):
@@ -80,6 +83,12 @@ class TitleScreen(BaseScreen):
             press_fnc=self._go_to_option_screen,
         )
         self.middle_sprites.add(option_btn_sprite)
+
+    
+    def _set_bgm(self):
+        self.bgm.stop()
+        self.bgm.set_volume(0.1)
+        self.bgm.play()
     
 
     def _visible_sprites(self, group: pygame.sprite.Group, sprites: List[Sprite]):
