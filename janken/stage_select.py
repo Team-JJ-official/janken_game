@@ -364,7 +364,6 @@ class StageSelectScreen(BaseScreen):
         """
         self.bgm_sound = game_config.sounds["menu"]
         self.click_sound = game_config.sounds["click"]
-        self.bgm_sound.set_volume(0.3)
         self.stage_sounds = {}
     
     def load_images(self, game_config: GameConfig):
