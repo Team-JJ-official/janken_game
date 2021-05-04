@@ -213,6 +213,26 @@ class Group(pygame.sprite.AbstractGroup):
     def __repr__(self):
         return "<%s(%d sprites, %d groups)>" % (self.__class__.__name__, len(self.sprites()), len(self.groups()))
 
+class LayeredGroup(Group):
+    def __init__(self):
+        super().__init__()
+        self.background_sprites = Group()
+        self.front_sprites = Group()
+    
+    def update(self):
+        self.background_sprites.update()
+        super().update()
+        self.front_sprites.update()
+
+    def draw(self, surface):
+        self.background_sprites.draw(surface)
+        super().draw(surface)
+        self.front_sprites.draw(surface)
+    
+    @property
+    def middle_sprites(self):
+        return self
+
 class GroupSingle(Group):
     def __init__(self, obj = None):
         super().__init__()
