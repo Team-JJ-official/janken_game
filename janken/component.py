@@ -207,6 +207,7 @@ def make_left_triangle(size: Tuple[int, int], color: Color=(0, 0, 0)):
     pygame.gfxdraw.filled_polygon(surface, points, color)
     return surface
 
+
 class ValuesGroup(Group):
     def __init__(self, base_rect: Rect, values: List[Any], labels: Optional[List[str]]=None, font_name: Optional[str]=None, color: Color=(255, 255, 255), bg_color: Color=(0, 0, 0), bg_alpha: float=1.0, defalut_i: int=0):
         super().__init__()
@@ -278,7 +279,6 @@ class ValuesGroup(Group):
         if self.i < l:
             self.i += 1
             self._update_images()
-
 
 
 class PlayerStockIcon(Group):
@@ -381,8 +381,12 @@ class KeyHandler(Group):
                     self.pressed[key] = True
                 elif self.pressed[key] and not key_pressed[key]: # 離した瞬間のみ
                     self.pressed[key] = False
-                    fnc(args)
+                    if args is not None:
+                        fnc(*args)
+                    else:
+                        fnc()
                     self.stop()
+
 
 class Checker(Group):
     def __init__(self, check_fncs: Union[Callable, List[Callable]], fnc: Callable, fnc_args: Any=None, stop_when_call_fnc=True):
@@ -420,6 +424,35 @@ class Checker(Group):
                 else:
                     self.fnc()
 
+
+class TimerGroup(Group):
+    def __init__(self):
+        super().__init__()
+        self.time_sprites = {}
+    
+    def add_timer_sprite(self, sprite: Union[Sprite, Group], timer: int, on_delete_fnc: Optional[Callable]=None, on_delete_fnc_args: Any=None):
+        dic = {
+            "time": timer,
+            "fnc": on_delete_fnc,
+            "fnc_args": on_delete_fnc_args,
+        }
+        self.time_sprites[sprite] = dic
+        self.add(sprite)
+    
+    def update(self):
+        delete_sprites = []
+        for sprite, dic in self.time_sprites.items():
+            dic["time"] -= 1
+            if dic["time"] <= 0:
+                delete_sprites.append(sprite)
+        for sprite in delete_sprites:
+            self.time_sprites.pop(sprite)
+            self.remove(sprite)
+            if dic["fnc"] is not None:
+                if dic["fnc_args"] is not None:
+                    dic["fnc"](dic["fnc_args"])
+                else:
+                    dic["fnc"]()
 
 
 if __name__ == "__main__":
