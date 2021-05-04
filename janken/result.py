@@ -12,7 +12,7 @@ class SimpleButton(LayeredGroup):
         super().__init__()
         self.text = text
         self.font_size = height // 2
-        self.font = pygame.font.Font(None, self.font_size)
+        self.font = pygame.font.Font("./fonts/Mplus2-Medium.ttf", self.font_size)
         self.func = func
         self.func_args = func_args
         self.__text_height_scale = 1.0
@@ -28,7 +28,7 @@ class SimpleButton(LayeredGroup):
     def _fit_font(self):
         while self.font.size(self.text)[0] > self.width:
             self.font_size -= 1
-            self.font = pygame.font.Font(None, self.font_size)
+            self.font = pygame.font.Font("./fonts/Mplus2-Medium.ttf", self.font_size)
     
     def _set_frame(self, clear = True, image = None):
         if image == None:
@@ -89,7 +89,7 @@ class ResultScreen(BaseScreen):
         btn_area_rect = self.area_rects[5].union(self.area_rects[10])
         btn_rects = layout_rects(btn_area_rect, 1, 3, margin_vertical=30, padding=20)
         btn_params = [
-            (btn_rects[0], "Replay", Screen.GAME),
+            (btn_rects[0], "もっかい", Screen.GAME),
             (btn_rects[1], "Character Select", Screen.CHARACTER_SELECT),
             (btn_rects[2], "Go to Title", Screen.START)
         ]
