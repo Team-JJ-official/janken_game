@@ -8,7 +8,7 @@ from pygame.sprite import Sprite
 
 from sprites import TextSprite, PressRect
 from sprites import RichSprite, SimpleSprite, adjust_rect
-from group import Group, GroupSingle
+from group import Group, GroupSingle, LayeredGroup
 from transform import surface_fit_to_rect
 
 Color = NewType("Color", Tuple[int, int, int])
@@ -425,29 +425,69 @@ class Checker(Group):
                     self.fnc()
 
 
-class TimerGroup(Group):
+class TimerGroup(LayeredGroup):
     def __init__(self):
+        """タイマーをセットして，時間が来たらスプライト(グループ)を追加・削除するグループ
+        """
         super().__init__()
         self.time_sprites = {}
     
-    def add_timer_sprite(self, sprite: Union[Sprite, Group], timer: int, on_delete_fnc: Optional[Callable]=None, on_delete_fnc_args: Any=None):
+    def add_timer_sprite(self, sprite: Union[Sprite, Group], timer: int, start_delay: int=0, on_delete_fnc: Optional[Callable]=None, on_delete_fnc_args: Any=None, layer: str="middle", debug_label: str=""):
+        """スプライト(or グループ)にタイマーをセットして追加する
+
+        Args:
+            sprite (Union[Sprite, Group]): 追加したいスプライトorグループ
+            timer (int): 追加したスプライトの生存フレーム数
+            start_delay (int, optional): スプライトを追加するまでのフレーム数. Defaults to 0.
+            on_delete_fnc (Optional[Callable], optional): スプライトの生存期間が終了した際に呼び出される関数をセットできる. Defaults to None.
+            on_delete_fnc_args (Any, optional): 関数に渡す引数をセットできる. Defaults to None.
+            layer (str, optional): スプライトを追加したいレイヤー.自身のグループ内でのレイヤーとなる.back, middle, frontの文字列を渡す. Defaults to "middle".
+            debug_label (str, optional): デバッグの際に表示したいラベル.何のためのスプライトorグループなのかを書いておくとわかりやすい. Defaults to "".
+        """
         dic = {
             "time": timer,
+            "start_delay": start_delay,
             "fnc": on_delete_fnc,
             "fnc_args": on_delete_fnc_args,
+            "layer": layer,
+            "debug_label": debug_label,
         }
         self.time_sprites[sprite] = dic
-        self.add(sprite)
     
     def update(self):
         delete_sprites = []
         for sprite, dic in self.time_sprites.items():
-            dic["time"] -= 1
-            if dic["time"] <= 0:
-                delete_sprites.append(sprite)
+            if dic["start_delay"] > 0:
+                dic["start_delay"] -= 1
+            elif dic["start_delay"] == 0:
+                print("add", dic)
+
+                # 追加
+                if dic["layer"] == "front":
+                    self.front_sprites.add(sprite)
+                elif dic["layer"] == "middle":
+                    self.middle_sprites.add(sprite)
+                else:
+                    self.background_sprites.add(sprite)
+                
+                dic["start_delay"] -= 1
+            else:
+                dic["time"] -= 1
+                if dic["time"] <= 0:
+                    delete_sprites.append(sprite)
+        
         for sprite in delete_sprites:
-            self.time_sprites.pop(sprite)
-            self.remove(sprite)
+            dic = self.time_sprites.pop(sprite)
+
+            # 削除
+            # self.remove(sprite)
+            if dic["layer"] == "front":
+                self.front_sprites.remove(sprite)
+            elif dic["layer"] == "middle":
+                self.middle_sprites.remove(sprite)
+            else:
+                self.background_sprites.remove(sprite)
+
             if dic["fnc"] is not None:
                 if dic["fnc_args"] is not None:
                     dic["fnc"](dic["fnc_args"])
