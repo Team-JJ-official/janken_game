@@ -38,7 +38,6 @@ class GameScreen(BaseScreen):
         def __repr__(self):
             return "<Actor: {}>".format(self.game_player)
         
-
     def __init__(self, game_player1, game_player2, game_setting):
         """ゲーム画面
 
@@ -70,7 +69,8 @@ class GameScreen(BaseScreen):
         self.actor1 = self.Actor(game_player1)
         self.actor2 = self.Actor(game_player2)
 
-        self.font = pygame.font.Font(None, 60)
+        # self.font = pygame.font.Font(None, 60)
+        self.font = pygame.font.Font("./fonts/Mplus2-Medium.ttf", 60)
 
         self.yattane = pygame.mixer.Sound("./sounds/yattane.mp3")
         self.uu = pygame.mixer.Sound("./sounds/uu.mp3")
@@ -93,12 +93,13 @@ class GameScreen(BaseScreen):
         self._reset()
     
     def _set_area(self):
+        """エリア分割を行う
+        """
         rect = self.display.get_rect()
         area_rects = layout_rects(rect, 2, 3)
         self.view_area = area_rects[0].union(area_rects[3])
         self.icon_area = area_rects[4].union(area_rects[5])
-
-    
+ 
     def _set_bg(self):
         """背景画像の設置．game_setting.stageを参照．
         """
@@ -110,7 +111,7 @@ class GameScreen(BaseScreen):
         self.background_sprites.add(self.bg_sprite)
 
     def _init_game(self):
-        """ゲームの初期化
+        """ゲームの初期化.
         """
         self.actor1.game_player.stock = self.game_setting.stock
         self.actor2.game_player.stock = self.game_setting.stock
@@ -227,30 +228,54 @@ class GameScreen(BaseScreen):
         }
         self.actor_state_group = Group()
         self.middle_sprites.add(self.actor_state_group)
-    
+
+        # 「さいしょは ぐー」などのセリフスプライト
+        self.before_battle_sprite1 = TextSprite(*self.view_area.center, align="center", vertical_align="middle", text="さいしょは ぐー", font=self.font, color=(0, 0, 0), bgcolor=(255, 255, 255))
+        self.before_battle_sprite2 = TextSprite(*self.view_area.center, align="center", vertical_align="middle", text="じゃんけん...", font=self.font, color=(0, 0, 0), bgcolor=(255, 255, 255))
+        self.before_battle_sprite3 = TextSprite(*self.view_area.center, align="center", vertical_align="middle", text="ぽん", font=self.font, color=(0, 0, 0), bgcolor=(255, 255, 255))
+        self.before_battle_sprite4 = TextSprite(*self.view_area.center, align="center", vertical_align="middle", text="あいこで", font=self.font, color=(0, 0, 0), bgcolor=(255, 255, 255))
+        self.before_battle_sprite5 = TextSprite(*self.view_area.center, align="center", vertical_align="middle", text="しょ", font=self.font, color=(0, 0, 0), bgcolor=(255, 255, 255))
+        self.end_battle_sprite = TextSprite(*self.view_area.center, align="center", vertical_align="middle", text="そこまで", font=self.font, color=(0, 0, 0), bgcolor=(255, 255, 255))
+
+        # あいこ中フラグ
+        self.pre_aiko = False
+
     def _start_battle_before_animation(self):
         """バトルアニメーションを開始
         """
         dummy = Group()
-        self.timer_group.add_timer_sprite(dummy, timer=30, on_delete_fnc=self._start_battle_hand_animation)
+        self.timer_group.add_timer_sprite(dummy, timer=30, on_delete_fnc=self.actor_state_group.empty)
+        if self.pre_aiko:
+            self.timer_group.add_timer_sprite(self.before_battle_sprite4, timer=60, start_delay=30, on_delete_fnc=self._start_battle_hand_animation, debug_label="あいこで")
+            self.timer_group.add_timer_sprite(self.before_battle_sprite5, timer=30, start_delay=90, layer="front", debug_label="しょ")
+        else:
+            self.timer_group.add_timer_sprite(self.before_battle_sprite1, timer=60, start_delay=30, debug_label="最初はグー")
+            self.timer_group.add_timer_sprite(self.before_battle_sprite2, timer=60, start_delay=90, on_delete_fnc=self._start_battle_hand_animation, debug_label="じゃんけん")
+            self.timer_group.add_timer_sprite(self.before_battle_sprite3, timer=30, start_delay=150, layer="front", debug_label="ぽん")
 
     def _start_battle_hand_animation(self):
         """手を出すアニメーションを開始
         """
-        self.actor_state_group.empty()
+        # self.actor_state_group.empty()
         group = Group()
         for actor in [self.actor1, self.actor2]:
             sprite = self.hand_sprites[actor][actor.hand]
             group.add(sprite)
-        self.timer_group.add_timer_sprite(group, timer=60, on_delete_fnc=self._judge)
+        self.timer_group.add_timer_sprite(group, timer=60, on_delete_fnc=self._judge, debug_label="手を表示する")
     
     def _start_battle_after_animation(self, actor):
+        """勝者を受け取って何かする
+
+        Args:
+            actor (Actor): 勝者Actor
+        """
+        self.pre_aiko = False
         if actor == self.actor1:
             self.yattane.play()
         elif actor == self.actor2:
             self.uu.play()
         else:
-            pass
+            self.pre_aiko = True
 
         end = False
         for actor in [self.actor1, self.actor2]:
@@ -259,17 +284,13 @@ class GameScreen(BaseScreen):
                 break
         
         dummy = Group()
-        if end:
-            self.timer_group.add_timer_sprite(dummy, timer=90, on_delete_fnc=self._start_battle_end_animation)
-        else:
-            self.timer_group.add_timer_sprite(dummy, timer=90, on_delete_fnc=self._reset)
+        self.timer_group.add_timer_sprite(dummy, timer=90, on_delete_fnc=self._start_battle_end_animation if end else self._reset, debug_label="ボイスの分")
     
     def _start_battle_end_animation(self):
         """Resultに移る前のアニメーション
         """
         self.sokomade.play()
-        text_sprite = TextSprite(*self.view_area.center, align="center", vertical_align="middle", text="sokomade", font=self.font, color=(0, 0, 0), bgcolor=(255, 255, 255))
-        self.timer_group.add_timer_sprite(text_sprite, timer=90, on_delete_fnc=self._go_to_result)
+        self.timer_group.add_timer_sprite(self.end_battle_sprite, timer=90, on_delete_fnc=self._go_to_result, debug_label="result遷移までの間(そこまでボイス分)")
         
     def _set_hand(self, actor, hand):
         """actorのHandを更新する
@@ -376,7 +397,7 @@ if __name__ == "__main__":
     from game_config import GameConfig
     game_config = GameConfig("./jsons/config.json")
 
-    game_setting = get_sample_game_setting(game_config, stock=3)
+    game_setting = get_sample_game_setting(game_config, stock=2)
     game_player1 = get_sample_game_player(game_config, name="sample1", stock=0)
     game_player2 = get_sample_game_player(game_config, name="sample2", stock=0)
     gs = GameScreen(game_player1, game_player2, game_setting)
