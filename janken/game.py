@@ -5,7 +5,7 @@ from pygame.rect import Rect
 
 from screen import Screen, BaseScreen
 from sprites import RichSprite, SimpleSprite, layout_rects, TextSprite
-from component import PlayerStockIcon, KeyHandler, Checker, TimerGroup
+from component import PlayerStockIcon, KeyHandler, Checker, TimerGroup, SpriteTransformManager, make_transform_properties
 from transform import surface_fit_to_rect
 from game_config import GameConfig
 from group import Group
@@ -200,6 +200,8 @@ class GameScreen(BaseScreen):
         """
         self.timer_group = TimerGroup()
         self.middle_sprites.add(self.timer_group)
+        self.transform_manager = SpriteTransformManager()
+        self.middle_sprites.add(self.transform_manager)
 
         rects = layout_rects(self.view_area, 2, 1, padding=40, margin_vertical=40)
         self.hand_sprites = {
@@ -257,11 +259,15 @@ class GameScreen(BaseScreen):
         """手を出すアニメーションを開始
         """
         # self.actor_state_group.empty()
+        total_frame = 60
         group = Group()
         for actor in [self.actor1, self.actor2]:
             sprite = self.hand_sprites[actor][actor.hand]
             group.add(sprite)
-        self.timer_group.add_timer_sprite(group, timer=60, on_delete_fnc=self._judge, debug_label="手を表示する")
+            sprite.image.set_alpha(0)
+            props = make_transform_properties(0, 0, 0, 0, 0, 1, total_frame=int(total_frame * 0.2))
+            self.transform_manager.add_transformer(sprite, props)
+        self.timer_group.add_timer_sprite(group, timer=total_frame, on_delete_fnc=self._judge, debug_label="手を表示する")
     
     def _start_battle_after_animation(self, actor):
         """勝者を受け取って何かする
@@ -290,7 +296,11 @@ class GameScreen(BaseScreen):
         """Resultに移る前のアニメーション
         """
         self.sokomade.play()
-        self.timer_group.add_timer_sprite(self.end_battle_sprite, timer=90, on_delete_fnc=self._go_to_result, debug_label="result遷移までの間(そこまでボイス分)")
+        self.end_battle_sprite.image.set_alpha(0)
+        total_frame = 90
+        props = make_transform_properties(0, 0, 0, 0, 0, 1, total_frame=int(total_frame * 0.3))
+        self.transform_manager.add_transformer(self.end_battle_sprite, props)
+        self.timer_group.add_timer_sprite(self.end_battle_sprite, timer=total_frame, on_delete_fnc=self._go_to_result, debug_label="result遷移までの間(そこまでボイス分)")
         
     def _set_hand(self, actor, hand):
         """actorのHandを更新する
