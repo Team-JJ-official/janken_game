@@ -495,6 +495,108 @@ class TimerGroup(LayeredGroup):
                     dic["fnc"]()
 
 
+
+class SpriteTransformer:
+    def __init__(self, dx: int, dy: int, d_alpha: int):
+        """スプライトを変形させるクラス
+
+        Args:
+            dx (int): x方向に移動させるピクセル
+            dy (int): y方向に移動させるピクセル
+            d_alpha (int): 増加させる透過度
+        """
+        self.dx = dx
+        self.dy = dy
+        self.d_alpha = d_alpha
+    
+    def transform(self, sprite: Sprite):
+        """自身のプロパティに従って，スプライトを変形させる
+
+        Args:
+            sprite (Sprite): 変形対象のスプライト
+        """
+        sprite.rect.move_ip(self.dx, self.dy)
+        sprite.image.set_alpha(sprite.image.get_alpha() + self.d_alpha)
+    
+    def __repr__(self):
+        return "<Transform: dx:{}, dy:{}, d_alpha:{}>".format(self.dx, self.dy, self.d_alpha)
+
+class SpriteTransformManager(Group):
+    def __init__(self):
+        """スプライトの変形を行うグループ
+        """
+        super().__init__()
+    
+        self.transform_sprites = {}
+    
+    def add_transformer(self, sprite: Sprite, transformer_properties: List[SpriteTransformer], reset_when_end: bool=False):
+        """変形リストを追加する
+
+        Args:
+            sprite (Sprite): 変形したいスプライト
+            transformer_properties (List[SpriteTransformer]): 変形リスト
+            reset_when_end (bool, optional): 変形が終わったら元に戻すかどうか. Defaults to False.
+        """
+        self.transform_sprites[sprite] = {
+            "props": transformer_properties,
+            "reset": reset_when_end,
+            "origin": {
+                "rect": sprite.rect,
+                "image": sprite.image.subsurface(sprite.image.get_rect()),
+            }
+        }
+        
+    
+    def update(self):
+        remove_sprites = []
+        for sprite, dic in self.transform_sprites.items():
+            props = dic["props"]
+            if props:
+                prop = props.pop()
+                # print(transform_property)
+                prop.transform(sprite)
+            else:
+                remove_sprites.append(sprite)
+        
+        for sprite in remove_sprites:
+            dic = self.transform_sprites.pop(sprite)
+            if dic["reset"]:
+                origin = dic["origin"]
+                sprite.rect = origin["rect"]
+                sprite.image = origin["image"]
+
+def make_transform_properties(start_x: int, start_y: int, start_alpha: float, end_x: int, end_y: int, end_alpha: float, total_frame: int):
+    """変形プロパティのリストを作成する
+
+    Args:
+        start_x (int): [description]
+        start_y (int): [description]
+        start_alpha (float): [description]
+        end_x (int): [description]
+        end_y (int): [description]
+        end_alpha (float): [description]
+        total_frame (int): [description]
+
+    Returns:
+        [type]: [description]
+    """
+    dx = (end_x - start_x) // total_frame
+    dy = (end_y - start_y) // total_frame
+    d_alpha = int(255 * (end_alpha - start_alpha) / total_frame)
+    
+    transformers = []
+
+    pre_x, pre_y, pre_alpha = start_x, start_y, start_alpha
+    for i in range(1, total_frame+1):
+        x = start_x + (end_x - start_x) * i // total_frame
+        y = start_y + (end_y - start_y) * i // total_frame
+        alpha = int(255 * (start_alpha + (end_alpha - start_alpha) * i / total_frame))
+        transformers.append(SpriteTransformer(dx=x - pre_x, dy=y - pre_y, d_alpha=alpha - pre_alpha))
+        pre_x, pre_y, pre_alpha = x, y, alpha
+    
+    return transformers
+
+
 if __name__ == "__main__":
     pygame.init()
     btn = CounterBtn(0, 0, pygame.font.SysFont(None, 10))
