@@ -34,6 +34,7 @@ class BaseScreen:
         self.clock = pygame.time.Clock()
         self.run = True
         self.next_screen = Screen.QUIT
+        self.key_downs = []
     
     # @property
     # def front_sprites(self) -> pygame.sprite.Group:
@@ -58,6 +59,8 @@ class BaseScreen:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.run = False
+            elif event.type == pygame.KEYDOWN:
+                self.key_downs.append(event)
     
     def empty_all_sprites(self):
         self.background_sprites.empty()
