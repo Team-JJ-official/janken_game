@@ -10,9 +10,9 @@ from sprites import make_outline_splites as make_outline_sprites
 from game_config import GameConfig
 from character import Character
 from player import Player
-from transform import surface_fit_to_rect
+from transform import surface_fit_to_rect, to_hoverable
 
-from group import Group, GroupSingle
+from group import Group, GroupSingle, LayeredGroup
 
 
 class BadgeSpriteGroup(Group):
@@ -93,6 +93,43 @@ class BadgeSpriteGroup(Group):
         self.badgesprite.sprite.rect.center = center
         self.textsprite.sprite.rect.center = center
 
+class CharacterSelectArea(LayeredGroup):
+    def __init__(self, display_rect, characters, outline):
+        super().__init__()
+        self.characters = characters
+        self.outline_image = outline
+        self.margin_lr = 30
+        self.margin_top = 30
+        self.space = 20
+        self.rect = pygame.rect.Rect(
+            self.margin_lr,
+            self.margin_top,
+            display_rect.width - self.margin_lr * 2,
+            max(100, display_rect.height // 2)
+        )
+        width = (self.rect.width - self.space * (len(self.characters) - 1)) // len(self.characters)
+        height = self.rect.height
+        self.character_rects = [pygame.rect.Rect(
+            self.rect.left + i * (width + self.space),
+            self.rect.top,
+            width,
+            height
+        ) for i in range(len(self.characters))]
+        for character, rect in zip(self.characters, self.character_rects):
+            character.face_image = surface_fit_to_rect(rect=rect, surface=character.face_image)
+            sprite = RichSprite(rect.centerx, rect.centery, image=character.face_image)
+            to_hoverable(sprite, self.outline_image, self.background_sprites)
+            sprite.change_press_fnc(self._press_character, (character, rect))
+            self.middle_sprites.add(sprite)
+        self.badge1 = BadgeSpriteGroup(25, (200, 5, 5), "1")
+        self.badge1.center = self.character_rects[0].topleft
+        self.front_sprites.add(self.badge1)
+    
+    def _press_character(self, character: Character, rect: pygame.rect.Rect):
+        character.select_voice.play()
+        self.badge1.center = rect.topleft
+        # self.gameplayer1.character = character
+
 
 
 class CharacterSelectScreen(BaseScreen):
@@ -100,7 +137,7 @@ class CharacterSelectScreen(BaseScreen):
         super().__init__()
 
         self.game_config = game_config
-        self.players = {}
+        self.players = self.game_config.players.values()
         self.characters = self.game_config.characters.values()
         self.gameplayer1 = gameplayer1
         self.gameplayer2 = gameplayer2
@@ -113,15 +150,14 @@ class CharacterSelectScreen(BaseScreen):
         self.character_rects = []
         self.space = 20
         self.hover_rects = {}
-        self.badge1 = BadgeSpriteGroup(25, (200, 5, 5), "1")
-        # self.badge2 = BadgeSprite(25)
-        # self.badge2.rect.center = (0, 50)
 
-        self.outline_image = pygame.image.load("./images/components/outline.png").convert()
-        self.outline_image = pygame.transform.scale2x(self.outline_image)
+        self.outline_image = self.game_config.components["outline"]
         self.outline_image = pygame.transform.scale2x(self.outline_image)
         self.font_size = 40
         self.font = pygame.font.SysFont(None, self.font_size)
+
+        self.character_select_area = CharacterSelectArea(self.display_rect, self.characters, self.outline_image)
+        
 
     def _badge_sprite(self, color):
         badge = pygame.Surface((50, 50))
@@ -157,40 +193,14 @@ class CharacterSelectScreen(BaseScreen):
         back_btn.change_press_fnc(self._goto_title)
         self.front_sprites.add(back_btn)
 
-    def _press_character(self, character: Character, rect: pygame.rect.Rect):
-        character.select_voice.play()
-        self.badge1.center = rect.topleft
-        # self.gameplayer1.character = character
-
     def _set_characters_area(self):
-        self.character_select_rect = pygame.rect.Rect(
-            self.margin_lr,
-            self.margin_top,
-            self.display_rect.width - self.margin_lr * 2,
-            max(100, self.display_rect.height // 2)
-        )
-        width = (self.character_select_rect.width - self.space * (len(self.characters) - 1)) // len(self.characters)
-        height = self.character_select_rect.height
-        self.character_rects = [pygame.rect.Rect(
-            self.character_select_rect.left + i * (width + self.space),
-            self.character_select_rect.top,
-            width,
-            height
-        ) for i in range(len(self.characters))]
-        for character, rect in zip(self.characters, self.character_rects):
-            # character.face_image = pygame.transform.scale(character.face_image, rect.size)
-            character.face_image = surface_fit_to_rect(rect=rect, surface=character.face_image)
-            sprite = RichSprite(rect.centerx, rect.centery, image=character.face_image)
-            self.hoverable(sprite, self.outline_image)
-            sprite.change_press_fnc(self._press_character, (character, rect))
-            self.front_sprites.add(sprite)
-        self.badge1.center = self.character_rects[0].topleft
+        self.middle_sprites.add(self.character_select_area)
 
     def _set_player_select_area(self):
         self.player_select_rect = pygame.rect.Rect(
             self.margin_lr,
-            self.character_select_rect.bottomleft[1] + (self.display_rect.height - self.character_select_rect.bottomleft[1]) // 2,
-            self.character_select_rect.width,
+            self.character_select_area.rect.bottomleft[1] + (self.display_rect.height - self.character_select_area.rect.bottomleft[1]) // 2,
+            self.character_select_area.rect.width,
             30
         )
         left = TextSprite(
@@ -218,10 +228,6 @@ class CharacterSelectScreen(BaseScreen):
         bg_image = pygame.transform.scale(bg_image, self.display_rect.size)
         bg_sprite = SimpleSprite(rect=self.display_rect, image=bg_image)
         self.background_sprites.add(bg_sprite)
-        print(self.front_sprites)
-        self.front_sprites.add(self.badge1)
-        print(self.front_sprites)
-        print(self.front_sprites.sprites())
 
         self._set_characters_area()
         self._set_player_select_area()
