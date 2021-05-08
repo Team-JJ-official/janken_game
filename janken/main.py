@@ -46,7 +46,8 @@ class Game:
         except:
             print("Loading not done.")
             return
-        
+        self.gameplayer1.player = self.game_config.players["0"]
+        self.gameplayer2.player = self.game_config.players["1"]
         now = self.start_screen(self.game_config)
         while True:
             now.main()

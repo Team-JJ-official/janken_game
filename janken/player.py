@@ -3,6 +3,10 @@ class KeyBind:
         self.A = ord(dic["A"])
         self.B = ord(dic["B"])
         self.C = ord(dic["C"])
+    
+    @property
+    def keys(self):
+        return [self.A, self.B, self.C]
 
 class Player:
     def __init__(self, id_: str, name: str, matches_num: int, win_num: int, keybind: dict):

@@ -77,6 +77,7 @@ class BadgeSpriteGroup(Group):
             font_size ([type], optional): [description]. Defaults to int(1e5).
         """
         super().__init__()
+        self.r = r
         self.badgesprite = GroupSingle(self.BadgeSprite(r, color))
         self.textsprite = GroupSingle(None)
         self.replace_text(text, font_size)
@@ -94,17 +95,28 @@ class BadgeSpriteGroup(Group):
         self.badgesprite.sprite.rect.center = center
         self.textsprite.sprite.rect.center = center
 
-class CharacterSelectArea(LayeredGroup):
-    class Key:
-        def __init__(self):
-            self.A = pygame.K_0
-            self.B = pygame.K_1
-            self.C = pygame.K_2
-    def __init__(self, display_rect, characters, outline):
+class GamePlayerSetter(Group):
+    def __init__(self, gameplayer, func):
         super().__init__()
-        self.key = self.Key()
+        self.gameplayer = gameplayer
+        self.keys = gameplayer.player.keybind.keys
+        self.func = func
+        self.func(gameplayer, 0)
+        # self.characters = {key: character for key, character in zip(self.keys, characters)}
+    
+    def update(self):
+        pressed_keys = pygame.key.get_pressed()
+        for i, key in enumerate(self.keys):
+            if pressed_keys[key]:
+                self.func(self.gameplayer, i)
+
+class CharacterSelectArea(LayeredGroup):
+    def __init__(self, display_rect, characters, outline, gameplayer1, gameplayer2):
+        super().__init__()
         self.characters = characters
         self.outline_image = outline
+        self.gameplayer1 = gameplayer1
+        self.gameplayer2 = gameplayer2
         self.margin_lr = 30
         self.margin_top = 30
         self.space = 20
@@ -122,34 +134,38 @@ class CharacterSelectArea(LayeredGroup):
             width,
             height
         ) for i in range(len(self.characters))]
+        self.character_to_rect = {}
         for character, rect in zip(self.characters, self.character_rects):
             character.face_image = surface_fit_to_rect(rect=rect, surface=character.face_image)
             sprite = RichSprite(rect.centerx, rect.centery, image=character.face_image)
             to_hoverable(sprite, self.outline_image, self.background_sprites)
             sprite.change_press_fnc(self._press_character, (character, rect))
             self.middle_sprites.add(sprite)
-        self.badge1 = BadgeSpriteGroup(25, (200, 5, 5), "1")
-        self.badge1.center = self.character_rects[0].topleft
-        self.front_sprites.add(self.badge1)
+        self.badges = {
+            gameplayer1: BadgeSpriteGroup(25, (200, 5, 5), "1"),
+            gameplayer2: BadgeSpriteGroup(25, (5, 200, 5), "2")
+        }
+        self.front_sprites.add(self.badges.values())
+        self.gameplayers = [GamePlayerSetter(gameplayer1, self._set_character), GamePlayerSetter(gameplayer2, self._set_character)]
+        self.add(self.gameplayers)
+
+    def _set_character(self, gameplayer, i):
+        if i >= len(self.characters):
+            return
+        gameplayer.character = self.characters[i]
+        self.badges[gameplayer].center = self.character_rects[i].topleft
+        if self.gameplayer1.character == self.gameplayer2.character:
+            c = self.badges[self.gameplayer1].center
+            b = self.badges[self.gameplayer2]
+            b.center = (c[0] + b.r * 2, c[1])
+        else:
+            if self.gameplayer2.character != None:
+                self.badges[self.gameplayer2].center = self.character_rects[self.characters.index(self.gameplayer2.character)].topleft
+        self.characters[i].select_voice.play()
+
     
     def _press_character(self, character: Character, rect: pygame.rect.Rect):
-        character.select_voice.play()
-        self.badge1.center = rect.topleft
-        # self.gameplayer1.character = character
-
-    def update(self):
-        super().update()
-        # pressed_keys = pygame.key.get_pressed()
-        # if pygame.K_0 == ord("0"):
-        #     print("0")
-        # for gameplayer, badge in zip([gameplayer1, gameplayer2], [self.badge1, self.badge2]):
-        #     if pressed_keys[gameplayer.player.keybind.A]:
-        #         Aが推されたときの処理
-        #     elif pressed_keys[gameplayer.player.keybind.B]:
-        #     elif pressed_keys[gameplayer.player.keybind.C]:
-        # if pressed_keys[gameplayer2.player.keybind.A]:
-
-
+        self._set_character(self.gameplayer1, self.characters.index(character))
 
 
 class CharacterSelectScreen(BaseScreen):
@@ -157,9 +173,8 @@ class CharacterSelectScreen(BaseScreen):
         super().__init__()
 
         self.game_config = game_config
-        self.players = self.game_config.players.values()
-        print(self.players)
-        self.characters = self.game_config.characters.values()
+        self.players = list(self.game_config.players.values())
+        self.characters = list(self.game_config.characters.values())
         self.gameplayer1 = gameplayer1
         self.gameplayer2 = gameplayer2
 
@@ -177,7 +192,7 @@ class CharacterSelectScreen(BaseScreen):
         self.font_size = 40
         self.font = pygame.font.SysFont(None, self.font_size)
 
-        self.character_select_area = CharacterSelectArea(self.display_rect, self.characters, self.outline_image)
+        self.character_select_area = CharacterSelectArea(self.display_rect, self.characters, self.outline_image, self.gameplayer1, self.gameplayer2)
         
 
     def _goto_stage_select(self):
