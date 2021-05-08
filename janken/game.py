@@ -356,7 +356,7 @@ def get_sample_game_player(game_config, name: str="sample", stock: int=0):
     from player import Player
 
 
-    player = Player(_id=random.randint(0, 10000), name=name, matches_num=1, win_num=1)
+    # player = Player(_id=random.randint(0, 10000), name=name, matches_num=1, win_num=1)
 
     game_config = GameConfig("./jsons/config.json")
 
@@ -368,10 +368,12 @@ def get_sample_game_player(game_config, name: str="sample", stock: int=0):
         
         def __repr__(self):
             return self.player.name
+    
+    print(game_config.players)
 
     game_player = GamePlayer()
     game_player.character = game_config.characters["0"]
-    game_player.player = player
+    game_player.player = list(game_config.players.values())[0]
     game_player.stock = stock
 
     return game_player
