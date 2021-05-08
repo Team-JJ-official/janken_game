@@ -102,7 +102,6 @@ class GamePlayerSetter(Group):
         self.keys = gameplayer.player.keybind.keys
         self.func = func
         self.func(gameplayer, 0)
-        # self.characters = {key: character for key, character in zip(self.keys, characters)}
     
     def update(self):
         pressed_keys = pygame.key.get_pressed()
@@ -184,12 +183,10 @@ class CharacterSelectScreen(BaseScreen):
         self.character_select_rect = None
         self.player_select_rect = None
         self.character_rects = []
-        self.space = 20
         self.hover_rects = {}
 
         self.outline_image = self.game_config.components["outline"]
         self.outline_image = pygame.transform.scale2x(self.outline_image)
-        self.font_size = 40
         self.font = pygame.font.SysFont(None, self.font_size)
 
         self.character_select_area = CharacterSelectArea(self.display_rect, self.characters, self.outline_image, self.gameplayer1, self.gameplayer2)
