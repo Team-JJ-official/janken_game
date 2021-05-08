@@ -14,5 +14,13 @@
         "choki_image_path": "./images/characters/janken_choki.png",
         "pa_image_path": "./images/characters/janken_pa.png",
         "select_voice_path": "./sounds/characters/click.mp3"
+    },
+    "2":{
+        "name": "character3",
+        "face_image_path": "./images/characters/character1.png",
+        "gu_image_path": "./images/characters/janken_gu.png",
+        "choki_image_path": "./images/characters/janken_choki.png",
+        "pa_image_path": "./images/characters/janken_pa.png",
+        "select_voice_path": "./sounds/characters/click.mp3"
     }
 }

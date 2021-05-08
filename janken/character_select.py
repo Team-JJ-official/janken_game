@@ -135,8 +135,8 @@ class CharacterSelectArea(LayeredGroup):
         ) for i in range(len(self.characters))]
         self.character_to_rect = {}
         for character, rect in zip(self.characters, self.character_rects):
-            character.face_image = surface_fit_to_rect(rect=rect, surface=character.face_image)
-            sprite = RichSprite(rect.centerx, rect.centery, image=character.face_image)
+            face_image = surface_fit_to_rect(rect=rect, surface=character.face_image)
+            sprite = RichSprite(rect.centerx, rect.centery, image=face_image)
             to_hoverable(sprite, self.outline_image, self.background_sprites)
             sprite.change_press_fnc(self._press_character, (character, rect))
             self.middle_sprites.add(sprite)
