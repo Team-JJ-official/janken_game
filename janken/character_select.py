@@ -187,6 +187,7 @@ class CharacterSelectScreen(BaseScreen):
 
         self.outline_image = self.game_config.components["outline"]
         self.outline_image = pygame.transform.scale2x(self.outline_image)
+        self.font_size = 40
         self.font = pygame.font.SysFont(None, self.font_size)
 
         self.character_select_area = CharacterSelectArea(self.display_rect, self.characters, self.outline_image, self.gameplayer1, self.gameplayer2)
