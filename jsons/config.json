@@ -5,6 +5,9 @@
     "character": {
         "path": "jsons/character.json"
     },
+    "player": {
+        "path": "jsons/player.json"
+    },
     "components": {
         "path": "jsons/components.json"
     },

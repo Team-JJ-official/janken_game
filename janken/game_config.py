@@ -100,10 +100,10 @@ class GameConfig:
                 key: Character(
                     id_=    key,
                     name=   dic["name"],
-                    face=   pygame.image.load(dic["face_image_path"]).convert(),
-                    gu=     pygame.image.load(dic["gu_image_path"]).convert(),
-                    choki=  pygame.image.load(dic["choki_image_path"]).convert(),
-                    pa=     pygame.image.load(dic["pa_image_path"]).convert(),
+                    face=   self._load_surface(dic["face_image_path"]),
+                    gu=     self._load_surface(dic["gu_image_path"]),
+                    choki=  self._load_surface(dic["choki_image_path"]),
+                    pa=     self._load_surface(dic["pa_image_path"]),
                     select_voice= self._load_sound(dic["select_voice_path"])
                 )
                 for key, dic in json_data.items()
@@ -118,7 +118,7 @@ class GameConfig:
                 key: Player(
                     id_=    key,
                     name=   dic["name"],
-                    matches_num= dic["maches_num"],
+                    matches_num= dic["matches_num"],
                     win_num= dic["win_num"],
                     keybind= dic["key_bind"]
                 )

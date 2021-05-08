@@ -158,6 +158,7 @@ class CharacterSelectScreen(BaseScreen):
 
         self.game_config = game_config
         self.players = self.game_config.players.values()
+        print(self.players)
         self.characters = self.game_config.characters.values()
         self.gameplayer1 = gameplayer1
         self.gameplayer2 = gameplayer2
@@ -178,12 +179,6 @@ class CharacterSelectScreen(BaseScreen):
 
         self.character_select_area = CharacterSelectArea(self.display_rect, self.characters, self.outline_image)
         
-
-    def _badge_sprite(self, color):
-        badge = pygame.Surface((50, 50))
-        badge.set_colorkey(badge.get_at((0, 0)))
-        pygame.gfxdraw.filled_circle(badge, badge.get_width() // 2, badge.get_height() // 2, 20, color)
-        return SimpleSprite(badge.get_rect(), badge)
 
     def _goto_stage_select(self):
         self.next_screen = Screen.STAGE_SELECT
