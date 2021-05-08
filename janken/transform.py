@@ -22,11 +22,13 @@ def surface_fit_to_rect(surface: pygame.surface.Surface, rect: pygame.rect.Rect)
         else:
             amp = rect.height / s_rect.height
     if amp != 1:
-        surface = pygame.transform.smoothscale(surface, (ceil(s_rect.width * amp), ceil(s_rect.height * amp)))
+        tmpsurface = pygame.transform.smoothscale(surface, (ceil(s_rect.width * amp), ceil(s_rect.height * amp)))
+    else:
+        tmpsurface = surface.copy()
     tag_rect = rect.copy()
-    s_rect = surface.get_rect()
+    s_rect = tmpsurface.get_rect()
     tag_rect.center = s_rect.center
-    return surface.subsurface(tag_rect)
+    return tmpsurface.subsurface(tag_rect)
 
 def to_hoverable(rich_sprite, outline_image, group=None, border_width: int=5):
     if group is None:
