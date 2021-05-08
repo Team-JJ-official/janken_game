@@ -139,15 +139,15 @@ class CharacterSelectArea(LayeredGroup):
 
     def update(self):
         super().update()
-        pressed_keys = pygame.key.get_pressed()
-        if pygame.K_0 == ord("0"):
-            print("0")
-        for gameplayer, badge in zip([gameplayer1, gameplayer2], [self.badge1, self.badge2]):
-            if pressed_keys[gameplayer.player.keybind.A]:
-                Aが推されたときの処理
-            elif pressed_keys[gameplayer.player.keybind.B]:
-            elif pressed_keys[gameplayer.player.keybind.C]:
-        if pressed_keys[gameplayer2.player.keybind.A]:
+        # pressed_keys = pygame.key.get_pressed()
+        # if pygame.K_0 == ord("0"):
+        #     print("0")
+        # for gameplayer, badge in zip([gameplayer1, gameplayer2], [self.badge1, self.badge2]):
+        #     if pressed_keys[gameplayer.player.keybind.A]:
+        #         Aが推されたときの処理
+        #     elif pressed_keys[gameplayer.player.keybind.B]:
+        #     elif pressed_keys[gameplayer.player.keybind.C]:
+        # if pressed_keys[gameplayer2.player.keybind.A]:
 
 
 
