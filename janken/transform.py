@@ -10,17 +10,7 @@ def surface_fit_to_rect(surface: pygame.surface.Surface, rect: pygame.rect.Rect)
     surfaceとrectのcenterを揃え，rectからはみ出た部分が切り取られるようにsubsurfaceを返す
     """
     s_rect = surface.get_rect()
-    amp = 1
-    if s_rect.width < rect.width or s_rect.height < rect.height:
-        if rect.width / s_rect.width < rect.height / s_rect.height:
-            amp = rect.height / s_rect.height
-        else:
-            amp = rect.width / s_rect.width
-    else:
-        if rect.width / s_rect.width < rect.height / s_rect.height:
-            amp = rect.width / s_rect.width
-        else:
-            amp = rect.height / s_rect.height
+    amp = max(rect.width / s_rect.width, rect.height / s_rect.height)
     if amp != 1:
         tmpsurface = pygame.transform.smoothscale(surface, (ceil(s_rect.width * amp), ceil(s_rect.height * amp)))
     else:
@@ -37,3 +27,13 @@ def to_hoverable(rich_sprite, outline_image, group=None, border_width: int=5):
     rich_sprite.change_enter_fnc(group.add, (outlines,))
     rich_sprite.change_exit_fnc(group.remove, (outlines,))
     return outlines
+
+if __name__ == '__main__':
+    w = 100
+    h = 100
+    surface = pygame.Surface((w, h))
+    for dx in [-10, 0, 10]:
+        for dy in [-10, 0, 10]:
+            rect = pygame.rect.Rect(0, 0, w + dx, h + dy)
+            s = surface_fit_to_rect(surface, rect)
+            print(s.get_rect(), rect)
