@@ -7,6 +7,7 @@ import pygame
 
 from stage import Stage
 from character import Character
+from player import Player
 
 class GameConfig:
     def __init__(self, json_path: str):
@@ -30,6 +31,7 @@ class GameConfig:
         """
         self.load_stages()
         self.load_characters()
+        self.load_players()
         self.load_components()
         self.load_sounds()
     
@@ -108,7 +110,20 @@ class GameConfig:
             }
 
     def load_players(self):
-        pass
+        tmp_dic = self.dic.get("player", False)
+        if tmp_dic:
+            with open(tmp_dic["path"], "r") as f:
+                json_data = json.load(f)
+            self.players = {
+                key: Player(
+                    id_=    key,
+                    name=   dic["name"],
+                    matches_num= dic["maches_num"],
+                    win_num= dic["win_num"],
+                    keybind= dic["key_bind"]
+                )
+                for key, dic in json_data.items()
+            }
     
     def load_components(self):
         """self.componentsに，共通して使いそうな画像類を読み込む．

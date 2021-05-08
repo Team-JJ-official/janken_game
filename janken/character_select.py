@@ -1,5 +1,6 @@
 from typing import Dict, List, Tuple
 import json
+from enum import Enum
 
 import pygame
 import pygame.gfxdraw
@@ -94,8 +95,14 @@ class BadgeSpriteGroup(Group):
         self.textsprite.sprite.rect.center = center
 
 class CharacterSelectArea(LayeredGroup):
+    class Key:
+        def __init__(self):
+            self.A = pygame.K_0
+            self.B = pygame.K_1
+            self.C = pygame.K_2
     def __init__(self, display_rect, characters, outline):
         super().__init__()
+        self.key = self.Key()
         self.characters = characters
         self.outline_image = outline
         self.margin_lr = 30
@@ -129,6 +136,19 @@ class CharacterSelectArea(LayeredGroup):
         character.select_voice.play()
         self.badge1.center = rect.topleft
         # self.gameplayer1.character = character
+
+    def update(self):
+        super().update()
+        pressed_keys = pygame.key.get_pressed()
+        if pygame.K_0 == ord("0"):
+            print("0")
+        for gameplayer, badge in zip([gameplayer1, gameplayer2], [self.badge1, self.badge2]):
+            if pressed_keys[gameplayer.player.keybind.A]:
+                Aが推されたときの処理
+            elif pressed_keys[gameplayer.player.keybind.B]:
+            elif pressed_keys[gameplayer.player.keybind.C]:
+        if pressed_keys[gameplayer2.player.keybind.A]:
+
 
 
 
