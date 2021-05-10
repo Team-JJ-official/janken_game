@@ -400,6 +400,21 @@ def layout_rects(base_rect: Rect, cols: Optional[int]=None, rows: Optional[int]=
     return rects
 
 
+def fit_surface(surface: Surface, rect: Rect) -> Surface:
+    """rectに収まるように縮小・拡大したsurfaceを返す
+
+    Args:
+        surface (Surface): 元画像Surface
+        rect (Rect): 基準となるRect
+
+    Returns:
+        Surface: 拡大・縮小後のSurface
+    """
+    s_rect = surface.get_rect()
+    amp = min(rect.w / s_rect.w, rect.h / s_rect.h)
+    return pygame.transform.scale(surface, (int(s_rect.w * amp), int(s_rect.h * amp)))
+
+
 if __name__ == "__main__":
     rich_sprite = RichSprite(0, 0, image=0, images=None)
     pass
