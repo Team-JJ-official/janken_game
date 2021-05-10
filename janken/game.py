@@ -4,7 +4,7 @@ import pygame
 from pygame.rect import Rect
 
 from screen import Screen, BaseScreen
-from sprites import RichSprite, SimpleSprite, layout_rects, TextSprite
+from sprites import RichSprite, SimpleSprite, layout_rects, TextSprite, fit_surface
 from component import PlayerStockIcon, KeyHandler, Checker, TimerGroup, SpriteTransformManager, make_transform_properties
 from transform import surface_fit_to_rect
 from game_config import GameConfig
@@ -119,7 +119,7 @@ class GameScreen(BaseScreen):
     def _set_player_icons(self):
         """プレイヤーアイコンの設置
         """
-        rects = layout_rects(self.icon_area, 2, 1, padding=30)
+        rects = layout_rects(self.icon_area, 2, 1, padding_left=70, padding_right=50, margin_horizontal=50)
         game_players = [self.actor1.game_player, self.actor2.game_player]
         for game_player, rect in zip(game_players, rects):
             player_icon_sprite = PlayerStockIcon(
@@ -206,26 +206,26 @@ class GameScreen(BaseScreen):
         rects = layout_rects(self.view_area, 2, 1, padding=40, margin_vertical=40)
         self.hand_sprites = {
             self.actor1: {
-                self.Hand.ROCK: SimpleSprite(rects[0], self.actor1.game_player.character.arm_image[0]),
-                self.Hand.SCISSORS: SimpleSprite(rects[0], self.actor1.game_player.character.arm_image[1]),
-                self.Hand.PAPER: SimpleSprite(rects[0], self.actor1.game_player.character.arm_image[2]),
+                self.Hand.ROCK: SimpleSprite(rects[0], fit_surface(self.actor1.game_player.character.arm_image[0], rects[0])),
+                self.Hand.SCISSORS: SimpleSprite(rects[0], fit_surface(self.actor1.game_player.character.arm_image[1], rects[0])),
+                self.Hand.PAPER: SimpleSprite(rects[0], fit_surface(self.actor1.game_player.character.arm_image[2], rects[0])),
             },
             self.actor2: {
-                self.Hand.ROCK: SimpleSprite(rects[1], self.actor2.game_player.character.arm_image[0]),
-                self.Hand.SCISSORS: SimpleSprite(rects[1], self.actor2.game_player.character.arm_image[1]),
-                self.Hand.PAPER: SimpleSprite(rects[1], self.actor2.game_player.character.arm_image[2]),
+                self.Hand.ROCK: SimpleSprite(rects[1], fit_surface(self.actor2.game_player.character.arm_image[0], rects[1])),
+                self.Hand.SCISSORS: SimpleSprite(rects[1], fit_surface(self.actor2.game_player.character.arm_image[1], rects[1])),
+                self.Hand.PAPER: SimpleSprite(rects[1], fit_surface(self.actor2.game_player.character.arm_image[2], rects[1])),
             }
         }
-        wait_surface = self.font.render("wait", True, (0, 0, 0), (255, 255, 255))
-        ready_surface = self.font.render("ready", True, (0, 0, 0), (255, 255, 255))
+        # wait_surface = self.font.render("wait", True, (0, 0, 0), (255, 255, 255))
+        # ready_surface = self.font.render("ready", True, (0, 0, 0), (255, 255, 255))
         self.actor_state_sprites = {
             self.actor1: {
-                True: SimpleSprite(rects[0], ready_surface),
-                False: SimpleSprite(rects[0], wait_surface),
+                True: TextSprite(*rects[0].midbottom, align="center", vertical_align="bottom", text="wait", font=self.font, color=(0, 0, 0), bgcolor=(255, 255, 255)),
+                False: TextSprite(*rects[0].midbottom, align="center", vertical_align="bottom", text="ready", font=self.font, color=(0, 0, 0), bgcolor=(255, 255, 255)),
             },
             self.actor2: {
-                True: SimpleSprite(rects[1], ready_surface),
-                False: SimpleSprite(rects[1], wait_surface),
+                True: TextSprite(*rects[1].midbottom, align="center", vertical_align="bottom", text="wait", font=self.font, color=(0, 0, 0), bgcolor=(255, 255, 255)),
+                False: TextSprite(*rects[1].midbottom, align="center", vertical_align="bottom", text="ready", font=self.font, color=(0, 0, 0), bgcolor=(255, 255, 255)),
             }
         }
         self.actor_state_group = Group()
@@ -369,8 +369,6 @@ def get_sample_game_player(game_config, name: str="sample", stock: int=0):
         def __repr__(self):
             return self.player.name
     
-    print(game_config.players)
-
     game_player = GamePlayer()
     game_player.character = game_config.characters["0"]
     game_player.player = list(game_config.players.values())[0]
