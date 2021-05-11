@@ -7,11 +7,13 @@ import pygame.gfxdraw
 
 from screen import Screen, BaseScreen
 from sprites import SimpleSprite, TextSprite, HoverRect, RichSprite
+from sprites import layout_rects
 from sprites import make_outline_splites as make_outline_sprites
 from game_config import GameConfig
 from character import Character
 from player import Player
 from transform import surface_fit_to_rect, to_hoverable
+from component import ValuesGroup
 
 from group import Group, GroupSingle, LayeredGroup
 
@@ -178,12 +180,9 @@ class CharacterSelectScreen(BaseScreen):
         self.gameplayer2 = gameplayer2
 
         self.margin_lr = 30
-        self.margin_top = 30
         self.display_rect = self.display.get_rect()
         self.character_select_rect = None
         self.player_select_rect = None
-        self.character_rects = []
-        self.hover_rects = {}
 
         self.outline_image = self.game_config.components["outline"]
         self.outline_image = pygame.transform.scale2x(self.outline_image)
@@ -194,6 +193,8 @@ class CharacterSelectScreen(BaseScreen):
         
 
     def _goto_stage_select(self):
+        for i, gameplayer in enumerate([self.gameplayer1, self.gameplayer2]):
+            gameplayer.player = self.player_select_btn[i].get_value()
         self.next_screen = Screen.STAGE_SELECT
         self.run = False
 
@@ -203,13 +204,13 @@ class CharacterSelectScreen(BaseScreen):
 
     def _set_next_btn(self):
         next_btn_image = self.font.render("Next", True, (0, 0, 0))
-        next_btn = RichSprite(*self.display_rect.bottomright, image=next_btn_image, align="right", vertical_align="bottom")
-        next_btn.rect.move_ip(-5, -5)
-        outline = make_outline_sprites(next_btn.rect, self.outline_image)
-        next_btn.change_enter_fnc(self.middle_sprites.add, outline)
-        next_btn.change_exit_fnc(self.middle_sprites.remove, outline)
-        next_btn.change_press_fnc(self._goto_stage_select)
-        self.front_sprites.add(next_btn)
+        self.next_btn = RichSprite(*self.display_rect.bottomright, image=next_btn_image, align="right", vertical_align="bottom")
+        self.next_btn.rect.move_ip(-5, -5)
+        outline = make_outline_sprites(self.next_btn.rect, self.outline_image)
+        self.next_btn.change_enter_fnc(self.middle_sprites.add, outline)
+        self.next_btn.change_exit_fnc(self.middle_sprites.remove, outline)
+        self.next_btn.change_press_fnc(self._goto_stage_select)
+        self.front_sprites.add(self.next_btn)
     
     def _set_back_btn(self):
         back_btn_image = self.font.render("Back", True, (0, 0, 0))
@@ -231,17 +232,20 @@ class CharacterSelectScreen(BaseScreen):
             self.character_select_area.rect.width,
             30
         )
-        left = TextSprite(
-            x=self.player_select_rect.left,
-            y=self.player_select_rect.y,
-            text="Player 1",
-            font=self.font,
-            color=(0, 0, 0),
-            bgcolor=(255, 255, 255),
-            align="left",
-            vertical_align="middle",
-        )
-        self.front_sprites.add(left)
+        self.players_rects = layout_rects(self.player_select_rect, 2, 1, margin_horizontal=10)
+        self.players_name = [player.name for player in self.players]
+        self.colors = [(200, 200, 200), (200, 200, 200)]
+        self.player_select_btn = [
+            ValuesGroup(
+                base_rect=self.players_rects[i],
+                values=self.players,
+                labels=self.players_name,
+                color=(0, 0, 0),
+                bg_color=self.colors[i],
+                defalut_i=i
+            )
+            for i in range(len(self.players_rects))]
+        self.front_sprites.add(self.player_select_btn)
 
     def _set_bgm(self):
         self.bgm: pygame.mixer.Sound = self.game_config.sounds["menu"]
@@ -262,9 +266,15 @@ class CharacterSelectScreen(BaseScreen):
         self._set_next_btn()
         self._set_back_btn()
 
+    def update(self):
+        super().update()
+        if self.front_sprites.has(self.next_btn) and self.player_select_btn[0].get_value() == self.player_select_btn[1].get_value():
+            self.front_sprites.remove(self.next_btn)
+        elif not self.front_sprites.has(self.next_btn) and self.player_select_btn[0].get_value() != self.player_select_btn[1].get_value():
+            self.front_sprites.add(self.next_btn)
+
     def main(self):
         self._adapt_display()
-        images = []
         super().main()
             
 def main():
