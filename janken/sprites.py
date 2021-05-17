@@ -336,6 +336,10 @@ class PressRect:
 
 def layout_rects(base_rect: Rect, cols: Optional[int]=None, rows: Optional[int]=None, item_width: Optional[int]=None, item_height: Optional[int]=None, padding: Optional[int]=None, padding_top: int=0, padding_bottom: int=0, padding_left: int=0, padding_right: int=0, margin_horizontal: int=0, margin_vertical: int=0) -> List[Rect]:
     """base_rectを均等に分割する．いろいろ指定可能性．
+    (cols=3, rows=2) =>
+    |0|1|2|
+    |3|4|5|
+
 
     Args:
         base_rect (Rect): [description]
