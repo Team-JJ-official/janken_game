@@ -16,5 +16,17 @@ class Player:
         self.win_num = win_num
         self.keybind = KeyBind(keybind)
 
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "matches_num": self.matches_num,
+            "win_num" : self.win_num,
+            "key_bind": {
+                "A": self.keybind.A,
+                "B": self.keybind.B,
+                "C": self.keybind.C
+            }
+        }
+
 
 

@@ -16,6 +16,10 @@ class ResultText(Group):
             self.text = "DRAW"
         else:
             self.text = self.winner.player.name + " WIN!!"
+            self.winner.player.win_num += 1
+        
+        game_player1.player.matches_num += 1
+        game_player2.player.matches_num += 1
 
         self.rect = rect
         self.font_size = self.rect.height // 3
