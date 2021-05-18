@@ -35,6 +35,16 @@ class GameConfig:
         self.load_components()
         self.load_sounds()
     
+    def _save_json(self, dic: dict, path: str):
+        """辞書をJSON形式で保存する
+
+        Args:
+            dic (dict): 辞書
+            path (str): 保存パス
+        """
+        with open(path, "w") as f:
+            json.dump(dic, f, indent=4, ensure_ascii=False)
+    
     def _load_json(self, path: str) -> dict:
         """JSONを読み込んで辞書を返す．
         """
@@ -125,6 +135,23 @@ class GameConfig:
                 for key, dic in json_data.items()
             }
     
+    def save_players(self) -> bool:
+        """プレイヤー情報を保存する
+
+        Returns:
+            bool: 保存成功したかどうか
+        """
+        tmp_dic = self.dic.get("player", False)
+        if tmp_dic:
+            save_path = tmp_dic["path"]
+            dic = {}
+            for key, player in self.players.items():
+                dic[key] = player.to_dict()
+            self._save_json(dic, save_path)
+            return True
+        else:
+            return False
+
     def load_components(self):
         """self.componentsに，共通して使いそうな画像類を読み込む．
         """
@@ -155,4 +182,5 @@ class GameConfig:
 
 if __name__ == "__main__":
     game_config = GameConfig("./jsons/config.json")
+    game_config.save_players()
     # print()

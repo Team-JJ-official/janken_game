@@ -2,7 +2,7 @@
     "0": {
         "name": "Mr JJ",
         "matches_num": 0,
-        "win_num" : 0,
+        "win_num": 0,
         "key_bind": {
             "A": "1",
             "B": "2",
@@ -12,7 +12,7 @@
     "1": {
         "name": "Zu_rin",
         "matches_num": 0,
-        "win_num" : 0,
+        "win_num": 0,
         "key_bind": {
             "A": "8",
             "B": "9",
