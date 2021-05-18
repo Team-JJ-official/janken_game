@@ -22,9 +22,9 @@ class Player:
             "matches_num": self.matches_num,
             "win_num" : self.win_num,
             "key_bind": {
-                "A": self.keybind.A,
-                "B": self.keybind.B,
-                "C": self.keybind.C
+                "A": chr(self.keybind.A),
+                "B": chr(self.keybind.B),
+                "C": chr(self.keybind.C)
             }
         }
 
