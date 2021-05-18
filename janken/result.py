@@ -58,6 +58,7 @@ class ResultScreen(BaseScreen):
     def _go_to_screen(self, screen: Screen):
         self.next_screen = screen
         self.run = False
+        self.game_config.save_players()
 
     def init(self):
         bg_image = self.game_config.components["background"]
